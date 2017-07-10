@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nvOnCompute"
+        android:title="计算" />
+    //android:icon="@drawable/ic_menu_share"
+
+    <item
+        android:id="@+id/nvOnLoad"
+        android:title="加载"/>
+
+</menu>

@@ -15,6 +15,9 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.GridView;
+import android.widget.SimpleAdapter;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -30,11 +33,14 @@ import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * Created by bwx on 2017/7/5.
  */
 
-public class OnLineMap extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, BDLocationListener, DrawerLayout.DrawerListener {
+public class OnLineMap extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, BDLocationListener, DrawerLayout.DrawerListener, AdapterView.OnItemSelectedListener, AdapterView.OnItemClickListener {
 
     private MapView onMapView = null;
     private BaiduMap mBaiduMap = null;
@@ -60,12 +66,24 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
     public LatLng ll;
 
+    //地图类型图片数组
+    private int mapTypeImage[];
+    //地图类型名数组
+    private String mapTypeName[];
+    //选择地图类型格网
+    private GridView mapTypeGV;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         //声明locationClient类
         mLocationClicent = new LocationClient(getActivity());
+
+        //地图类型图片数组
+        mapTypeImage = new int[]{R.drawable.mapimage2d,R.drawable.mapimage3d,R.drawable.mapweixing};
+        //地图类型名称数组
+        mapTypeName = new String[]{"2D地图","3D地图","卫星图"};
 
 
         //setUserVisibleHint(true);
@@ -85,7 +103,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         mBaiduMap = onMapView.getMap();
 
         //普通地图
-        mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+        //mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
 
 
 
@@ -98,12 +116,35 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         dyOnFunc.addDrawerListener(this);
         nvOnFunc = (NavigationView) onView.findViewById(R.id.nvOnFunc);
 
+        //查找到gridView
+        mapTypeGV = (GridView) nvOnFunc.getHeaderView(0).findViewById(R.id.mapTypeGView);
+
         nvOnFunc.setNavigationItemSelectedListener(this);
+
+        //地图类型图片文字list
+        ArrayList<HashMap<String,Object>> lstImageName = new ArrayList<>();
+        for(int i = 0; i < 3; i++){
+            HashMap<String,Object> map = new HashMap<>();
+            map.put("mapTypeImage", mapTypeImage[i]);
+            map.put("mapTypeName", mapTypeName[i]);
+            lstImageName.add(map);
+        }
+
+        //地图类型选择adapter
+        SimpleAdapter samapType = new SimpleAdapter(getContext(),lstImageName,
+                R.layout.header_item,new String[]{"mapTypeImage","mapTypeName"},
+                new int[]{R.id.itemImage,R.id.itemText});
+        //设置地图类型gridView的adapter
+        mapTypeGV.setAdapter(samapType);
+        //设置地图类型选择监听器
+        mapTypeGV.setOnItemSelectedListener(this);
+        //点击地图类型监听器
+        mapTypeGV.setOnItemClickListener(this);
 
 
 
         //开启定位图层
-        mBaiduMap.setMyLocationEnabled(true);
+        //mBaiduMap.setMyLocationEnabled(true);
 
 
         // 设置定位图层的配置（定位模式，是否允许方向信息，用户自定义定位图标）
@@ -291,6 +332,32 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     public void onDrawerStateChanged(int newState) {}
 
 
+
+    //选择地图类型
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        switch (mapTypeImage[position]){
+            case R.drawable.mapimage2d:
+                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+                break;
+            case R.drawable.mapimage3d:
+                mBaiduMap.setMyLocationEnabled(true);
+                break;
+            case R.drawable.mapweixing:
+                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
+                break;
+        }
+    }
 }
 
 

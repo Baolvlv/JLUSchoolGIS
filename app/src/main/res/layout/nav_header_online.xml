@@ -4,13 +4,10 @@
     android:layout_height="match_parent">
 
     <GridView
-        android:id="@+id/gvMapType"
+        android:id="@+id/mapTypeGView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:numColumns="3"
-        android:columnWidth="80dp"
-        android:stretchMode="columnWidth">
-
+        android:layout_height="match_parent"
+        android:numColumns="3">
     </GridView>
 
 </LinearLayout>

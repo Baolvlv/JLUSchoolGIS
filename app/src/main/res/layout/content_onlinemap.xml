@@ -10,13 +10,31 @@
         android:id="@+id/btnOnFunction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
+        android:layout_marginTop="100dp"
         app:srcCompat="@android:drawable/ic_dialog_email" />
     <com.baidu.mapapi.map.MapView
         android:id="@+id/bmapView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:clickable="true">
-
     </com.baidu.mapapi.map.MapView>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/btnLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:layout_margin="50dp"
+        android:src="@mipmap/ic_my_location"
+        app:backgroundTint="@android:color/background_light" />
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/btnRoute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/ic_my_route"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="50dp"
+        app:backgroundTint="@android:color/background_light" />
 
 </android.support.design.widget.CoordinatorLayout>

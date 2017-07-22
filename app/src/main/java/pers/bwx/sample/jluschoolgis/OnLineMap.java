@@ -1,6 +1,9 @@
 package pers.bwx.sample.jluschoolgis;
 
 
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -15,9 +18,11 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
+import android.widget.ZoomControls;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -26,6 +31,7 @@ import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
@@ -47,7 +53,14 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
     private View onView;
 
+    //功能按钮
     private FloatingActionButton btnOnFunc;
+    //定位按钮
+    private FloatingActionButton btnLocaton;
+
+    //路径按钮
+    private FloatingActionButton btnRoute;
+
     private DrawerLayout dyOnFunc;
     private NavigationView nvOnFunc;
 
@@ -58,8 +71,6 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
     //当前定位图标
     private BitmapDescriptor mCurrentMarker;
-
-
 
     //定位设置
     LocationClientOption option = null;
@@ -72,6 +83,19 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     private String mapTypeName[];
     //选择地图类型格网
     private GridView mapTypeGV;
+
+    //缩放按钮
+    private ZoomControls mapZoom;
+    //屏幕管理
+    private WindowManager wm;
+    //屏幕高度
+    public int windowHeight;
+    //屏幕宽度
+    public int windowWidth;
+    //缩放控件位置
+    //public static  final Point zoomPoint = new Point(1420,1000);
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -100,15 +124,42 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         onMapView = (MapView) onView.findViewById(R.id.bmapView);
 
+
         mBaiduMap = onMapView.getMap();
+        //onMapView.showZoomControls(false);
+
+        mBaiduMap.setOnMapLoadedCallback(new MyMapLoadCallback());
+//        mBaiduMap.setOnMapRenderCallbadk(new BaiduMap.OnMapRenderCallback() {
+//            @Override
+//            public void onMapRenderFinished() {
+//                onMapView.setZoomControlsPosition(new Point(100,100));
+//            }
+//        });
+
+
 
         //普通地图
         //mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
 
+        //设置缩放按钮的位置
+//        mapZoom = (ZoomControls) onMapView.getChildAt(2);
+//        wm = (WindowManager) getContext()
+//                .getSystemService(Context.WINDOW_SERVICE);
+//
+//        windowHeight = wm.getDefaultDisplay().getHeight();
+//        windowWidth = wm.getDefaultDisplay().getWidth();
+//        mapZoom.setPadding(windowWidth,(int)(windowHeight*0.75),0,(int)(windowHeight*0.25));
 
 
+
+        //功能按钮
         btnOnFunc = (FloatingActionButton) onView.findViewById(R.id.btnOnFunction);
         btnOnFunc.setOnClickListener(this);
+
+        //定位按钮
+        btnLocaton = (FloatingActionButton) onView.findViewById(R.id.btnLocation);
+        btnLocaton.setPadding(0,(int)(windowHeight*0.75),windowWidth,(int)(windowWidth*0.25));
+        btnLocaton.setOnClickListener(this);
 
         dyOnFunc = (DrawerLayout) onView.findViewById(R.id.dyOnFunc);
         dyOnFunc.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
@@ -120,6 +171,12 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         mapTypeGV = (GridView) nvOnFunc.getHeaderView(0).findViewById(R.id.mapTypeGView);
 
         nvOnFunc.setNavigationItemSelectedListener(this);
+
+        //路径按钮
+
+        btnRoute = (FloatingActionButton) onView.findViewById(R.id.btnRoute);
+        btnRoute.setOnClickListener(this);
+
 
         //地图类型图片文字list
         ArrayList<HashMap<String,Object>> lstImageName = new ArrayList<>();
@@ -160,8 +217,6 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         mLocationClicent.registerLocationListener(this);
         initLocation();
         mLocationClicent.start();
-
-
 
 
         return onView;
@@ -232,9 +287,29 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     //打开抽屉功能
     @Override
     public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.btnOnFunction:
+                //打开抽屉功能
+                DrawerLayout drawer = (DrawerLayout) onView.findViewById(R.id.dyOnFunc);
+                drawer.openDrawer(GravityCompat.START);
+                break;
+            case R.id.btnLocation:
+                //发起定位请求
+                mBaiduMap.setMyLocationEnabled(true);
+                mCurrentMarker = BitmapDescriptorFactory
+                        .fromResource(R.drawable.icon_gcoding);
+                MyLocationConfiguration config = new MyLocationConfiguration(MyLocationConfiguration.LocationMode.COMPASS, false, mCurrentMarker);
+                mBaiduMap.setMyLocationConfiguration(config);
+                mLocationClicent.registerLocationListener(this);
+                initLocation();
+                mLocationClicent.start();
+                break;
+            case R.id.btnRoute:
+                getActivity().startActivity(new Intent(getActivity(),Route.class));
+                break;
+        }
 
-        DrawerLayout drawer = (DrawerLayout) onView.findViewById(R.id.dyOnFunc);
-        drawer.openDrawer(GravityCompat.START);
+
     }
 
 
@@ -348,16 +423,46 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         switch (mapTypeImage[position]){
             case R.drawable.mapimage2d:
-                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+                //正常地图类型
+                mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);;
+
+                //地图状态俯视角0
+                MapStatus twoDStatus = new MapStatus.Builder()
+                        .overlook(0)
+                        .build();
+                //地图状态变化对象
+                MapStatusUpdate twoDStatusUpdate = MapStatusUpdateFactory.newMapStatus(twoDStatus);
+                //改变地图状态
+                mBaiduMap.setMapStatus(twoDStatusUpdate);
+
                 break;
             case R.drawable.mapimage3d:
-                mBaiduMap.setMyLocationEnabled(true);
+                //地图状态俯视角30
+                MapStatus threeDStatus = new MapStatus.Builder()
+                        .overlook(-30)
+                        .build();
+                //地图状态变化对象
+                MapStatusUpdate threeDStatusUpdate = MapStatusUpdateFactory.newMapStatus(threeDStatus);
+                //改变地图状态
+                mBaiduMap.setMapStatus(threeDStatusUpdate);
                 break;
             case R.drawable.mapweixing:
+                mBaiduMap.setMyLocationEnabled(false);
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
                 break;
         }
     }
+
+    class MyMapLoadCallback implements BaiduMap.OnMapLoadedCallback{
+
+        @Override
+        public void onMapLoaded() {
+            //缩放控件位置
+            onMapView.setZoomControlsPosition(new Point(950,1200));
+        }
+    }
+
+
 }
 
 

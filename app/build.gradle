@@ -32,11 +32,12 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile(name: 'arcgis-android-100.1.0', ext: 'aar')
-    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile files('libs/BaiduLBS_Android.jar')
+    compile files('libs/IndoorscapeAlbumPlugin.jar')
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:24.2.1'
     testCompile 'junit:junit:4.12'
-    compile files('libs/BaiduLBS_Android.jar')
-    compile files('libs/IndoorscapeAlbumPlugin.jar')
+    compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
 }
+
 

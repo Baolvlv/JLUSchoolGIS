@@ -9,6 +9,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,6 +20,7 @@ import android.widget.SimpleAdapter;
 
 import com.esri.arcgisruntime.loadable.LoadStatus;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
+import com.esri.arcgisruntime.mapping.Basemap;
 import com.esri.arcgisruntime.mapping.MobileMapPackage;
 import com.esri.arcgisruntime.mapping.view.MapView;
 
@@ -29,7 +31,7 @@ import java.util.HashMap;
  * Created by bwx on 2017/7/5.
  */
 
-public class OffLineMap extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, AdapterView.OnItemSelectedListener {
+public class OffLineMap extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, AdapterView.OnItemSelectedListener,AdapterView.OnItemClickListener {
 
     private MapView offMapView;
     private ArcGISMap mArcGISap;
@@ -47,9 +49,15 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     //校区选择网格
     private GridView schoolGv1;
     private GridView schoolGv2;
+
+    String mmpkPath = Environment.getExternalStorageDirectory()+"/ArcGIS/shuchu.mmpk";
+    private MobileMapPackage mobileMapPackage;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+
 
         schoolimage1 = new int[]{R.drawable.zhongxin,R.drawable.chaoyang,R.drawable.xinmin};
         schoolimage2 = new int[]{R.drawable.nanling,R.drawable.nanhu,R.drawable.heping};
@@ -61,24 +69,32 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        offView = inflater.inflate(R.layout.offlinemap_fragment, container, false);
-        offMapView = (MapView) offView.findViewById(R.id.arcmapView);
-        String mmpkPath = Environment.getExternalStorageDirectory()+"/ArcGIS/shuchu.mmpk";
 
         //移动地图包
-        final MobileMapPackage mobileMapPackage = new MobileMapPackage(mmpkPath);
+        try {
 
-        mobileMapPackage.addDoneLoadingListener(new Runnable() {
-            @Override
-            public void run() {
-                if(mobileMapPackage.getLoadStatus() == LoadStatus.LOADED){
-                    mArcGISap = mobileMapPackage.getMaps().get(0);
-                    offMapView.setMap(mArcGISap);
+            offView = inflater.inflate(R.layout.offlinemap_fragment, container, false);
+            offMapView = (MapView) offView.findViewById(R.id.arcmapView);
+            mobileMapPackage = new MobileMapPackage(mmpkPath);
+            mobileMapPackage.loadAsync();
+            mobileMapPackage.addDoneLoadingListener(new Runnable() {
+                @Override
+                public void run() {
+                    if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
+                        mArcGISap = mobileMapPackage.getMaps().get(0);
+                        offMapView.setMap(mArcGISap);
+                    } else {
+
+                    }
                 }
-            }
-        });
+            });
+//            mArcGISap  = new ArcGISMap(Basemap.Type.TOPOGRAPHIC, 34.056295, -117.195800, 16);
+//            offMapView.setMap(mArcGISap);
 
-        mobileMapPackage.loadAsync();
+        }catch (Exception e){
+            Log.e("fuck",e.toString());
+        }
+
 
         btnOffFunc = (FloatingActionButton) offView.findViewById(R.id.btnOffFunction);
         btnOffFunc.setOnClickListener(this);
@@ -186,6 +202,9 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     @Override
     public void onDrawerStateChanged(int newState) {}
 
+
+
+
     //选择不同校区时加载地图
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -213,7 +232,31 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
 
 
     @Override
-    public void onNothingSelected(AdapterView<?> parent) {
+    public void onNothingSelected(AdapterView<?> parent) {}
 
+
+    //点击不同校区时，加载图片
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        switch (schoolimage1[position]){
+            case R.drawable.zhongxin:
+                break;
+            case R.drawable.chaoyang:
+
+                mobileMapPackage.addDoneLoadingListener(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(mobileMapPackage.getLoadStatus() == LoadStatus.LOADED){
+                            mArcGISap = mobileMapPackage.getMaps().get(0);
+                            offMapView.setMap(mArcGISap);
+                        }
+                    }
+                });
+                mobileMapPackage.loadAsync();
+                break;
+            case R.drawable.xinmin:
+                break;
+        }
     }
 }

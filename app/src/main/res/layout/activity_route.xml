@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="pers.bwx.sample.jluschoolgis.MainTabActivity">
+    tools:context="pers.bwx.sample.jluschoolgis.Route">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
@@ -14,28 +14,30 @@
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/appbar_padding_top"
         android:theme="@style/AppTheme.AppBarOverlay">
+            <EditText
+                android:id="@+id/route_startPoint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="我的位置"/>
+            <EditText
+                android:id="@+id/route_endPoint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="输入终点"/>
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|enterAlways"
-            app:popupTheme="@style/AppTheme.PopupOverlay">
-
-        </android.support.v7.widget.Toolbar>
         <android.support.design.widget.TabLayout
-            android:id="@+id/tabs"
+            android:id="@+id/route_mode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:tabIndicatorColor="@android:color/holo_green_light"
-            app:tabSelectedTextColor="@android:color/holo_orange_light" />
-
+            app:tabSelectedTextColor="@android:color/holo_red_dark"/>
     </android.support.design.widget.AppBarLayout>
-    <pers.bwx.sample.jluschoolgis.CustomViewPager
+
+    <android.support.v4.view.ViewPager
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
 
 </android.support.design.widget.CoordinatorLayout>

@@ -3,4 +3,10 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="paleturquoise">#AFEEEE</color><!--苍宝石绿 -->
+    <color name="lightgreen">#90EE90</color><!--亮绿色 -->
+    <color name="black">#000000</color><!--黑色 -->
+    <color name="white">#FFFFFF</color><!--白色 -->
+    <color name="lightgray">#D3D3D3</color> <!--亮灰色 -->
+    <color name="darkgray">#A9A9A9</color> <!--暗灰色 -->
 </resources>

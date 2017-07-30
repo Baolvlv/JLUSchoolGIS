@@ -15,6 +15,7 @@
         android:id="@+id/btnOffFunction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        app:srcCompat="@mipmap/ic_map_view"
+        app:backgroundTint="@android:color/background_light"/>
 
 </android.support.design.widget.CoordinatorLayout>

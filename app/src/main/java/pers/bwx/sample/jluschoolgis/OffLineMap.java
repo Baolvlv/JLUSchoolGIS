@@ -58,7 +58,6 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
 
 
 
-
         schoolimage1 = new int[]{R.drawable.zhongxin,R.drawable.chaoyang,R.drawable.xinmin};
         schoolimage2 = new int[]{R.drawable.nanling,R.drawable.nanhu,R.drawable.heping};
         schoolname1 = new String[]{"中心校区","朝阳校区","新民校区"};

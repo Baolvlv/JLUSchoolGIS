@@ -12,7 +12,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
 
@@ -22,7 +21,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_school"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -46,12 +45,20 @@
         <service
             android:name="com.baidu.location.f"
             android:enabled="true"
-            android:process=":remote"></service>
+            android:process=":remote" />
 
         <activity
             android:name=".Route"
             android:label="@string/title_activity_route"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:parentActivityName=".MainTabActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".SelectPoint"
+            android:parentActivityName=".Route">
+        </activity>
+        <activity android:name=".SelectPInMap"
+            android:parentActivityName=".SelectPoint">
+        </activity>
     </application>
 
 </manifest>

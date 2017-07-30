@@ -12,7 +12,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|left"
         android:layout_marginTop="100dp"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        app:srcCompat="@mipmap/ic_map_view"
+        app:backgroundTint="@android:color/background_light"/>
     <com.baidu.mapapi.map.MapView
         android:id="@+id/bmapView"
         android:layout_width="wrap_content"

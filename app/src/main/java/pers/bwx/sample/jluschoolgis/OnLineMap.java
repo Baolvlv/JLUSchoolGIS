@@ -84,18 +84,6 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     //选择地图类型格网
     private GridView mapTypeGV;
 
-    //缩放按钮
-    private ZoomControls mapZoom;
-    //屏幕管理
-    private WindowManager wm;
-    //屏幕高度
-    public int windowHeight;
-    //屏幕宽度
-    public int windowWidth;
-    //缩放控件位置
-    //public static  final Point zoomPoint = new Point(1420,1000);
-
-
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -128,28 +116,8 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         mBaiduMap = onMapView.getMap();
         //onMapView.showZoomControls(false);
 
+        //添加地图加载完成回调监听
         mBaiduMap.setOnMapLoadedCallback(new MyMapLoadCallback());
-//        mBaiduMap.setOnMapRenderCallbadk(new BaiduMap.OnMapRenderCallback() {
-//            @Override
-//            public void onMapRenderFinished() {
-//                onMapView.setZoomControlsPosition(new Point(100,100));
-//            }
-//        });
-
-
-
-        //普通地图
-        //mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
-
-        //设置缩放按钮的位置
-//        mapZoom = (ZoomControls) onMapView.getChildAt(2);
-//        wm = (WindowManager) getContext()
-//                .getSystemService(Context.WINDOW_SERVICE);
-//
-//        windowHeight = wm.getDefaultDisplay().getHeight();
-//        windowWidth = wm.getDefaultDisplay().getWidth();
-//        mapZoom.setPadding(windowWidth,(int)(windowHeight*0.75),0,(int)(windowHeight*0.25));
-
 
 
         //功能按钮
@@ -158,7 +126,6 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         //定位按钮
         btnLocaton = (FloatingActionButton) onView.findViewById(R.id.btnLocation);
-        btnLocaton.setPadding(0,(int)(windowHeight*0.75),windowWidth,(int)(windowWidth*0.25));
         btnLocaton.setOnClickListener(this);
 
         dyOnFunc = (DrawerLayout) onView.findViewById(R.id.dyOnFunc);
@@ -214,10 +181,12 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         mBaiduMap.setMyLocationConfiguration(config);
 
+        //设置定位监听器
         mLocationClicent.registerLocationListener(this);
+        //初始化定位设置
         initLocation();
+        //开始定位
         mLocationClicent.start();
-
 
         return onView;
     }
@@ -284,7 +253,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     }
 
 
-    //打开抽屉功能
+    //功能：定位，路线
     @Override
     public void onClick(View v) {
         switch (v.getId()){
@@ -305,7 +274,8 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 mLocationClicent.start();
                 break;
             case R.id.btnRoute:
-                getActivity().startActivity(new Intent(getActivity(),Route.class));
+                Intent toRouteIntent = new Intent(getActivity(),Route.class);
+                getActivity().startActivity(toRouteIntent);
                 break;
         }
 
@@ -408,7 +378,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
 
 
-    //选择地图类型
+
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
@@ -419,6 +389,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
     }
 
+    //选择地图类型
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         switch (mapTypeImage[position]){
@@ -453,6 +424,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         }
     }
 
+    //地图加载完成时回调
     class MyMapLoadCallback implements BaiduMap.OnMapLoadedCallback{
 
         @Override

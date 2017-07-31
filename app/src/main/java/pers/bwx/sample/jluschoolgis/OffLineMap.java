@@ -1,5 +1,7 @@
 package pers.bwx.sample.jluschoolgis;
 
+import android.content.Context;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -12,20 +14,29 @@ import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
 
+import com.esri.arcgisruntime.concurrent.ListenableFuture;
+import com.esri.arcgisruntime.data.Feature;
+import com.esri.arcgisruntime.layers.FeatureLayer;
 import com.esri.arcgisruntime.loadable.LoadStatus;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
-import com.esri.arcgisruntime.mapping.Basemap;
+import com.esri.arcgisruntime.mapping.GeoElement;
+import com.esri.arcgisruntime.mapping.LayerList;
 import com.esri.arcgisruntime.mapping.MobileMapPackage;
+import com.esri.arcgisruntime.mapping.view.DefaultMapViewOnTouchListener;
+import com.esri.arcgisruntime.mapping.view.IdentifyLayerResult;
 import com.esri.arcgisruntime.mapping.view.MapView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by bwx on 2017/7/5.
@@ -34,7 +45,7 @@ import java.util.HashMap;
 public class OffLineMap extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, AdapterView.OnItemSelectedListener,AdapterView.OnItemClickListener {
 
     private MapView offMapView;
-    private ArcGISMap mArcGISap;
+    private ArcGISMap mArcGISMap;
     private View offView;
     private FloatingActionButton btnOffFunc;
     private DrawerLayout dyOffFunc;
@@ -50,18 +61,21 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     private GridView schoolGv1;
     private GridView schoolGv2;
 
+
+    //需要识别的图层
+    FeatureLayer featureLayerToIdentify;
+    //用户点击的屏幕点
+    Point screenPoint = new Point();
+
     String mmpkPath = Environment.getExternalStorageDirectory()+"/ArcGIS/shuchu.mmpk";
     private MobileMapPackage mobileMapPackage;
+
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-
-        schoolimage1 = new int[]{R.drawable.zhongxin,R.drawable.chaoyang,R.drawable.xinmin};
-        schoolimage2 = new int[]{R.drawable.nanling,R.drawable.nanhu,R.drawable.heping};
-        schoolname1 = new String[]{"中心校区","朝阳校区","新民校区"};
-        schoolname2 = new String[]{"南岭校区","南湖校区","和平校区"};
+        initTextAndImage();
 
     }
 
@@ -75,72 +89,28 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
             offView = inflater.inflate(R.layout.offlinemap_fragment, container, false);
             offMapView = (MapView) offView.findViewById(R.id.arcmapView);
             mobileMapPackage = new MobileMapPackage(mmpkPath);
-            mobileMapPackage.loadAsync();
             mobileMapPackage.addDoneLoadingListener(new Runnable() {
                 @Override
                 public void run() {
                     if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
-                        mArcGISap = mobileMapPackage.getMaps().get(0);
-                        offMapView.setMap(mArcGISap);
+                        mArcGISMap = mobileMapPackage.getMaps().get(0);
+                        offMapView.setMap(mArcGISMap);
                     } else {
 
                     }
                 }
             });
-//            mArcGISap  = new ArcGISMap(Basemap.Type.TOPOGRAPHIC, 34.056295, -117.195800, 16);
-//            offMapView.setMap(mArcGISap);
+
+            mobileMapPackage.loadAsync();
 
         }catch (Exception e){
             Log.e("fuck",e.toString());
         }
 
-
-        btnOffFunc = (FloatingActionButton) offView.findViewById(R.id.btnOffFunction);
-        btnOffFunc.setOnClickListener(this);
-
-        dyOffFunc = (DrawerLayout) offView.findViewById(R.id.dyOffFunc);
-        dyOffFunc.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
-        dyOffFunc.addDrawerListener(this);
-        nvOffFunc = (NavigationView) offView.findViewById(R.id.nvOffFunc);
-        //查找到gridView
-        schoolGv1 = (GridView) nvOffFunc.getHeaderView(0).findViewById(R.id.schoolAreaGView1);
-        schoolGv2 = (GridView) nvOffFunc.getHeaderView(0).findViewById(R.id.schoolAreaGView2);
-        nvOffFunc.setNavigationItemSelectedListener(this);
-
-
-
-        //校区图片文字list
-        ArrayList<HashMap<String,Object>> lstImageName1 = new ArrayList<>();
-        for(int i = 0; i < 3; i++){
-            HashMap<String,Object> map = new HashMap<>();
-            map.put("schoolImage1", schoolimage1[i]);
-            map.put("schoolName1", schoolname1[i]);
-            lstImageName1.add(map);
-        }
-
-        ArrayList<HashMap<String,Object>> lstImageName2 = new ArrayList<>();
-        for(int i = 0; i < 3; i++){
-            HashMap<String,Object> map = new HashMap<>();
-            map.put("schoolImage2", schoolimage2[i]);
-            map.put("schoolName2", schoolname2[i]);
-            lstImageName2.add(map);
-        }
-
-        //校区选择adapter
-        SimpleAdapter saSchool1 = new SimpleAdapter(getContext(),lstImageName1,
-                R.layout.header_item,new String[]{"schoolImage1","schoolName1"},
-                new int[]{R.id.itemImage,R.id.itemText});
-        SimpleAdapter saSchool2 = new SimpleAdapter(getContext(),lstImageName2,
-                R.layout.header_item,new String[]{"schoolImage2","schoolName2"},
-                new int[]{R.id.itemImage,R.id.itemText} );
-
-        schoolGv1.setAdapter(saSchool1);
-        schoolGv1.setOnItemSelectedListener(this);
-        schoolGv2.setAdapter(saSchool2);
-        schoolGv2.setOnItemSelectedListener(this);
-
-
-
+        //初始化layout和button
+        initViewAndButton();
+        //初始化GridView
+        initGridView();
 
 
         return offView;
@@ -169,7 +139,13 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
 
         int id = item.getItemId();
         switch (id){
-            case R.id.nvOffCompute:
+            case R.id.nvOffIdentify:
+                //添加地图点击事件监听器
+                IdentifyFeatureLayerTouchListener ml =
+                        new IdentifyFeatureLayerTouchListener(getContext(),offMapView);
+                offMapView.setOnTouchListener(ml);
+                Log.e("oooooooooooooooooooooo",ml.point.toString());
+
 
                 break;
             case R.id.nvOffLoad:
@@ -247,8 +223,8 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                     @Override
                     public void run() {
                         if(mobileMapPackage.getLoadStatus() == LoadStatus.LOADED){
-                            mArcGISap = mobileMapPackage.getMaps().get(0);
-                            offMapView.setMap(mArcGISap);
+                            mArcGISMap = mobileMapPackage.getMaps().get(0);
+                            offMapView.setMap(mArcGISMap);
                         }
                     }
                 });
@@ -258,4 +234,141 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                 break;
         }
     }
+
+
+
+    private class IdentifyFeatureLayerTouchListener extends DefaultMapViewOnTouchListener {
+        Point point = new Point();
+
+        //默认构造函数，确认mapView和需要识别的图层
+        public IdentifyFeatureLayerTouchListener(Context context, MapView mapView) {
+            super(context, mapView);
+
+        }
+
+        // 点击屏幕
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            // get the screen point where user tapped
+            this.point = new Point((int) e.getX(), (int) e.getY());
+            Log.e("777777777777777",point.toString());
+            // ...
+
+            request(point);
+
+            return true;
+        }
+    }
+
+
+    /***
+     * 初始化layout和button
+     */
+    public void initViewAndButton(){
+        btnOffFunc = (FloatingActionButton) offView.findViewById(R.id.btnOffFunction);
+        btnOffFunc.setOnClickListener(this);
+
+        dyOffFunc = (DrawerLayout) offView.findViewById(R.id.dyOffFunc);
+        dyOffFunc.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        dyOffFunc.addDrawerListener(this);
+        nvOffFunc = (NavigationView) offView.findViewById(R.id.nvOffFunc);
+        //查找到gridView
+        schoolGv1 = (GridView) nvOffFunc.getHeaderView(0).findViewById(R.id.schoolAreaGView1);
+        schoolGv2 = (GridView) nvOffFunc.getHeaderView(0).findViewById(R.id.schoolAreaGView2);
+        nvOffFunc.setNavigationItemSelectedListener(this);
+
+    }
+
+    /***
+     * 初始化校区选择的gridView
+     */
+
+    public void initGridView(){
+
+        //校区图片文字list
+        ArrayList<HashMap<String,Object>> lstImageName1 = new ArrayList<>();
+        for(int i = 0; i < 3; i++){
+            HashMap<String,Object> map = new HashMap<>();
+            map.put("schoolImage1", schoolimage1[i]);
+            map.put("schoolName1", schoolname1[i]);
+            lstImageName1.add(map);
+        }
+
+        ArrayList<HashMap<String,Object>> lstImageName2 = new ArrayList<>();
+        for(int i = 0; i < 3; i++){
+            HashMap<String,Object> map = new HashMap<>();
+            map.put("schoolImage2", schoolimage2[i]);
+            map.put("schoolName2", schoolname2[i]);
+            lstImageName2.add(map);
+        }
+
+        //校区选择adapter
+        SimpleAdapter saSchool1 = new SimpleAdapter(getContext(),lstImageName1,
+                R.layout.header_item,new String[]{"schoolImage1","schoolName1"},
+                new int[]{R.id.itemImage,R.id.itemText});
+        SimpleAdapter saSchool2 = new SimpleAdapter(getContext(),lstImageName2,
+                R.layout.header_item,new String[]{"schoolImage2","schoolName2"},
+                new int[]{R.id.itemImage,R.id.itemText} );
+
+        schoolGv1.setAdapter(saSchool1);
+        schoolGv1.setOnItemSelectedListener(this);
+        schoolGv2.setAdapter(saSchool2);
+        schoolGv2.setOnItemSelectedListener(this);
+    }
+
+    /***
+     * 初始化校区选择图片与文本
+     */
+
+    public void initTextAndImage(){
+        schoolimage1 = new int[]{R.drawable.zhongxin,R.drawable.chaoyang,R.drawable.xinmin};
+        schoolimage2 = new int[]{R.drawable.nanling,R.drawable.nanhu,R.drawable.heping};
+        schoolname1 = new String[]{"中心校区","朝阳校区","新民校区"};
+        schoolname2 = new String[]{"南岭校区","南湖校区","和平校区"};
+    }
+
+    /***
+     * 查询所有的要素图层
+     */
+
+    public void request(Point p){
+
+        // call identifyLayersAsync, passing in the screen point, tolerance, return types, and maximum results, but no layer
+        final ListenableFuture<List<IdentifyLayerResult>> identifyFuture = offMapView.identifyLayersAsync(
+                p, 20, false, 25);
+
+        // add a listener to the future
+        identifyFuture.addDoneListener(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // get the identify results from the future - returns when the operation is complete
+                    List<IdentifyLayerResult> identifyLayersResults = identifyFuture.get();
+
+                    // iterate all the layers in the identify result
+                    for (IdentifyLayerResult identifyLayerResult : identifyLayersResults) {
+
+                        // iterate each result in each identified layer, and check for Feature results
+                        for (GeoElement identifiedElement : identifyLayerResult.getElements()) {
+                            if (identifiedElement instanceof Feature) {
+                                Feature identifiedFeature = (Feature) identifiedElement;
+
+                                // Use feature as required, for example access attributes or geometry, select, build a table, etc...
+                                //processIdentifyFeatureResult(identifiedFeature, identifyLayerResult.getLayerContent());
+
+                                Log.e("result:",identifiedFeature.getFeatureTable().getTableName());
+                            }
+                        }
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    // must deal with exceptions thrown from the async identify operation
+                    Log.e("fuuuuuuuuuu",ex.getMessage());
+                }
+            }
+        });
+
+    }
+
+
+
 }

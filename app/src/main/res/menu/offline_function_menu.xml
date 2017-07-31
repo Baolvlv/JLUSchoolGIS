@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/nvOffCompute"
-        android:title="计算" />
+        android:id="@+id/nvOffIdentify"
+        android:title="空间查询" />
         //android:icon="@drawable/ic_menu_share"
 
     <item

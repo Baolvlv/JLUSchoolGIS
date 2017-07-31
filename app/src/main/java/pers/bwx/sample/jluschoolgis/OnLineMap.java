@@ -289,10 +289,10 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         int id = item.getItemId();
         switch (id){
-            case R.id.nvOffCompute:
+            case R.id.nvOnCompute:
 
                 break;
-            case R.id.nvOffLoad:
+            case R.id.nvOnLoad:
                 break;
         }
 
@@ -306,10 +306,10 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 //    public void setUserVisibleHint(boolean isVisibleToUser) {        //核心方法，避免因Fragment跳转导致地图崩溃
 //        super.setUserVisibleHint(isVisibleToUser);
 //        if (isVisibleToUser == true) {
-//            // if this view is visible to user, start to request user location
+//            // if this view is visible to user, start to identufy user location
 //            startRequestLocation();
 //        } else if (isVisibleToUser == false) {
-//            // if this view is not visible to user, stop to request user
+//            // if this view is not visible to user, stop to identufy user
 //            // location
 //            stopRequestLocation();
 //        }

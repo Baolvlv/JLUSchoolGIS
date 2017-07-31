@@ -1,6 +1,7 @@
 package pers.bwx.sample.jluschoolgis;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
@@ -11,6 +12,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -20,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import com.esri.arcgisruntime.concurrent.ListenableFuture;
 import com.esri.arcgisruntime.data.Feature;
@@ -27,12 +30,19 @@ import com.esri.arcgisruntime.layers.FeatureLayer;
 import com.esri.arcgisruntime.loadable.LoadStatus;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
 import com.esri.arcgisruntime.mapping.GeoElement;
-import com.esri.arcgisruntime.mapping.LayerList;
 import com.esri.arcgisruntime.mapping.MobileMapPackage;
 import com.esri.arcgisruntime.mapping.view.DefaultMapViewOnTouchListener;
 import com.esri.arcgisruntime.mapping.view.IdentifyLayerResult;
 import com.esri.arcgisruntime.mapping.view.MapView;
+import com.esri.arcgisruntime.mapping.view.SketchCreationMode;
+import com.esri.arcgisruntime.mapping.view.SketchEditor;
+import com.esri.arcgisruntime.mapping.view.SketchStyle;
+import com.esri.arcgisruntime.portal.PortalItem;
+import com.esri.arcgisruntime.tasks.networkanalysis.RouteParameters;
+import com.esri.arcgisruntime.tasks.networkanalysis.RouteResult;
+import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +80,12 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     String mmpkPath = Environment.getExternalStorageDirectory()+"/ArcGIS/shuchu.mmpk";
     private MobileMapPackage mobileMapPackage;
 
+    //草图编辑器
+    SketchEditor mainSketchEditor;
+    //草图样式
+    SketchStyle mainSketchStyle;
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -95,6 +111,11 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                     if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
                         mArcGISMap = mobileMapPackage.getMaps().get(0);
                         offMapView.setMap(mArcGISMap);
+                        //初始化草图样式与草图编辑器
+                        mainSketchEditor = new SketchEditor();
+                        mainSketchStyle = new SketchStyle();
+                        mainSketchEditor.setSketchStyle(mainSketchStyle);
+                        offMapView.setSketchEditor(mainSketchEditor);
                     } else {
 
                     }
@@ -140,7 +161,7 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
         int id = item.getItemId();
         switch (id){
             case R.id.nvOffIdentify:
-                //添加地图点击事件监听器
+                //识别功能
                 IdentifyFeatureLayerTouchListener ml =
                         new IdentifyFeatureLayerTouchListener(getContext(),offMapView);
                 offMapView.setOnTouchListener(ml);
@@ -148,7 +169,31 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
 
 
                 break;
-            case R.id.nvOffLoad:
+            case R.id.nvOffSketchEditor:
+                //草图编辑功能：
+                mainSketchEditor.start(SketchCreationMode.POLYGON);
+                break;
+            case R.id.nvOffSave:
+                File directory = new File(mmpkPath);
+                final RouteTask routeTask = new RouteTask(getContext(),directory.getAbsolutePath());
+                // load route task
+                routeTask.loadAsync();
+                routeTask.addDoneLoadingListener(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (routeTask.getLoadError() == null && routeTask.getLoadStatus() == LoadStatus.LOADED) {
+                            Log.e("success","route task has loaded successfully");
+                        }
+                    }
+
+                });
+//                try {
+//                    RouteResult result = routeTask.solveRouteAsync(new RouteParameters()).get();
+//                } catch (Exception ex) {
+//                    Log.e("false",ex.getMessage());
+//                }
+
+
                 break;
         }
 
@@ -254,7 +299,7 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
             Log.e("777777777777777",point.toString());
             // ...
 
-            request(point);
+            identufy(point);
 
             return true;
         }
@@ -331,7 +376,7 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
      * 查询所有的要素图层
      */
 
-    public void request(Point p){
+    public void identufy(Point p){
 
         // call identifyLayersAsync, passing in the screen point, tolerance, return types, and maximum results, but no layer
         final ListenableFuture<List<IdentifyLayerResult>> identifyFuture = offMapView.identifyLayersAsync(

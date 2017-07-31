@@ -6,9 +6,12 @@
         //android:icon="@drawable/ic_menu_share"
 
     <item
-        android:id="@+id/nvOffLoad"
-        android:title="加载"/>
+        android:id="@+id/nvOffSketchEditor"
+        android:title="绘制多边形"/>
         <!--android:icon="@drawable/ic_menu_send" -->
+    <item
+        android:id="@+id/nvOffSave"
+        android:title="保存"/>
 
 
 </menu>

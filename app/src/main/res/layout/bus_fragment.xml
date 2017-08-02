@@ -5,7 +5,32 @@
     <GridView
         android:id="@+id/busGirdView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:numColumns="2"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:background="@color/lightblue"/>
+
+    <ListView
+        android:id="@+id/list_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    </ListView>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/lightgray"/>
+
+    <TextView
+        android:id="@+id/tv_clean"
+        android:text="清空历史记录"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="80dp"
+        android:textAppearance="?android:textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 
 </LinearLayout>

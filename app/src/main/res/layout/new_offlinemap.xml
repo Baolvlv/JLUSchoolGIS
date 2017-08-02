@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sothree.slidinguppanel.SlidingUpPanelLayout
+    xmlns:sothree="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sliding_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="bottom"
+    sothree:umanoPanelHeight="80dp"
+    sothree:umanoShadowHeight="4dp"
+    sothree:umanoInitialState="hidden">
+
+    <include
+        layout="@layout/offlinemap_fragment"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/feature_table"
+            android:textColor="@color/black"
+            android:textSize="20dp"
+            android:text="要素属性表"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <ListView
+            android:id="@+id/feature_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@color/lightblue"
+            android:dividerHeight="3dp">
+        </ListView>
+    </LinearLayout>
+</com.sothree.slidinguppanel.SlidingUpPanelLayout>

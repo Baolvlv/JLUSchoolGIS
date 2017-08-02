@@ -7,6 +7,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
@@ -49,9 +51,15 @@ public class WalkResult extends Fragment implements OnGetRoutePlanResultListener
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        try{
+            startNodeStr = getArguments().getString("ST").substring(6);
+            endNodeStr = getArguments().getString("ED").substring(6);
 
-        startNodeStr = getArguments().getString("ST").substring(6);
-        endNodeStr = getArguments().getString("ED").substring(6);
+        }catch (Exception ex){
+
+        }
+
+
 
     }
 
@@ -88,26 +96,26 @@ public class WalkResult extends Fragment implements OnGetRoutePlanResultListener
     public void onGetWalkingRouteResult(WalkingRouteResult walkingRouteResult) {
 
         if (walkingRouteResult == null || walkingRouteResult.error != SearchResult.ERRORNO.NO_ERROR) {
-            Log.e("fuuuuuuck","无结果");
+           //Toast.makeText(getContext(),"起终点不明确，尝试地图选点",Toast.LENGTH_SHORT).show();
         }
         if (walkingRouteResult.error == SearchResult.ERRORNO.AMBIGUOUS_ROURE_ADDR) {
             // 起终点或途经点地址有岐义，通过以下接口获取建议查询信息
-            Log.e("llll", walkingRouteResult.getSuggestAddrInfo().describeContents() + "");
+            String st = walkingRouteResult.getSuggestAddrInfo().describeContents() + "";
+            //Toast.makeText(getContext(),"起终点不明确，尝试地图选点"+st,Toast.LENGTH_SHORT).show();
         }
 
 //        if (walkingRouteResult.getRouteLines().size() == 1) {
             // 直接显示
+        try{
             WalkingRouteOverlay overlay = new MyWalkingRouteOverlay(map);
             map.setOnMarkerClickListener(overlay);
             routeOverlay = overlay;
             overlay.setData(walkingRouteResult.getRouteLines().get(0));
             overlay.addToMap();
             overlay.zoomToSpan();
-//
-//        } else {
-//            Log.d("route result", "结果数<0");
-//        }
-
+        }catch (Exception ex){
+            Toast.makeText(getContext(),"抱歉，无结果",Toast.LENGTH_SHORT).show();
+        }
 
     }
     private class MyWalkingRouteOverlay extends WalkingRouteOverlay {

@@ -20,7 +20,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
@@ -41,6 +43,7 @@ import com.esri.arcgisruntime.portal.PortalItem;
 import com.esri.arcgisruntime.tasks.networkanalysis.RouteParameters;
 import com.esri.arcgisruntime.tasks.networkanalysis.RouteResult;
 import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -71,11 +74,9 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     private GridView schoolGv1;
     private GridView schoolGv2;
 
+    //上滑列表布局
+    SlidingUpPanelLayout supLayout;
 
-    //需要识别的图层
-    FeatureLayer featureLayerToIdentify;
-    //用户点击的屏幕点
-    Point screenPoint = new Point();
 
     String mmpkPath = Environment.getExternalStorageDirectory()+"/ArcGIS/shuchu.mmpk";
     private MobileMapPackage mobileMapPackage;
@@ -84,6 +85,9 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     SketchEditor mainSketchEditor;
     //草图样式
     SketchStyle mainSketchStyle;
+
+    //属性列表
+    ListView featureListView;
 
 
 
@@ -99,39 +103,19 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        //移动地图包
-        try {
-
-            offView = inflater.inflate(R.layout.offlinemap_fragment, container, false);
-            offMapView = (MapView) offView.findViewById(R.id.arcmapView);
-            mobileMapPackage = new MobileMapPackage(mmpkPath);
-            mobileMapPackage.addDoneLoadingListener(new Runnable() {
-                @Override
-                public void run() {
-                    if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
-                        mArcGISMap = mobileMapPackage.getMaps().get(0);
-                        offMapView.setMap(mArcGISMap);
-                        //初始化草图样式与草图编辑器
-                        mainSketchEditor = new SketchEditor();
-                        mainSketchStyle = new SketchStyle();
-                        mainSketchEditor.setSketchStyle(mainSketchStyle);
-                        offMapView.setSketchEditor(mainSketchEditor);
-                    } else {
-
-                    }
-                }
-            });
-
-            mobileMapPackage.loadAsync();
-
-        }catch (Exception e){
-            Log.e("fuck",e.toString());
-        }
+        offView = inflater.inflate(R.layout.new_offlinemap, container, false);
+        supLayout = (SlidingUpPanelLayout) offView.findViewById(R.id.sliding_layout);
+        offMapView = (MapView) offView.findViewById(R.id.arcmapView);
+        featureListView = (ListView) offView.findViewById(R.id.feature_list);
 
         //初始化layout和button
         initViewAndButton();
         //初始化GridView
         initGridView();
+        //加载地图
+        loadMap();
+
+
 
 
         return offView;
@@ -174,26 +158,6 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                 mainSketchEditor.start(SketchCreationMode.POLYGON);
                 break;
             case R.id.nvOffSave:
-                File directory = new File(mmpkPath);
-                final RouteTask routeTask = new RouteTask(getContext(),directory.getAbsolutePath());
-                // load route task
-                routeTask.loadAsync();
-                routeTask.addDoneLoadingListener(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (routeTask.getLoadError() == null && routeTask.getLoadStatus() == LoadStatus.LOADED) {
-                            Log.e("success","route task has loaded successfully");
-                        }
-                    }
-
-                });
-//                try {
-//                    RouteResult result = routeTask.solveRouteAsync(new RouteParameters()).get();
-//                } catch (Exception ex) {
-//                    Log.e("false",ex.getMessage());
-//                }
-
-
                 break;
         }
 
@@ -301,6 +265,8 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
 
             identufy(point);
 
+            //设置向上滑动属性表出现
+            supLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
             return true;
         }
     }
@@ -373,6 +339,35 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     }
 
     /***
+     * 加载地图
+     */
+
+    public void loadMap(){
+        try{
+            mobileMapPackage = new MobileMapPackage(mmpkPath);
+            mobileMapPackage.addDoneLoadingListener(new Runnable() {
+                @Override
+                public void run() {
+                    if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
+                        mArcGISMap = mobileMapPackage.getMaps().get(0);
+                        offMapView.setMap(mArcGISMap);
+                        //初始化草图样式与草图编辑器
+                        mainSketchEditor = new SketchEditor();
+                        mainSketchStyle = new SketchStyle();
+                        mainSketchEditor.setSketchStyle(mainSketchStyle);
+                        offMapView.setSketchEditor(mainSketchEditor);
+                    }
+                }
+            });
+
+            mobileMapPackage.loadAsync();
+
+        }catch (Exception e){
+            Log.e("fuck",e.toString());
+        }
+    }
+
+    /***
      * 查询所有的要素图层
      */
 
@@ -380,7 +375,7 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
 
         // call identifyLayersAsync, passing in the screen point, tolerance, return types, and maximum results, but no layer
         final ListenableFuture<List<IdentifyLayerResult>> identifyFuture = offMapView.identifyLayersAsync(
-                p, 20, false, 25);
+                p, 10, false, 25);
 
         // add a listener to the future
         identifyFuture.addDoneListener(new Runnable() {
@@ -389,6 +384,8 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                 try {
                     // get the identify results from the future - returns when the operation is complete
                     List<IdentifyLayerResult> identifyLayersResults = identifyFuture.get();
+                    ArrayList<String> featureList = new ArrayList<>();
+                    String tableName;
 
                     // iterate all the layers in the identify result
                     for (IdentifyLayerResult identifyLayerResult : identifyLayersResults) {
@@ -402,9 +399,15 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                                 //processIdentifyFeatureResult(identifiedFeature, identifyLayerResult.getLayerContent());
 
                                 Log.e("result:",identifiedFeature.getFeatureTable().getTableName());
+                                tableName = identifiedFeature.getFeatureTable().getTableName();
+
+                                featureList.add(tableName);
                             }
                         }
                     }
+                    ArrayAdapter featureAdapter = new ArrayAdapter(getContext(),
+                            R.layout.single_text_item,R.id.single_text,featureList);
+                    featureListView.setAdapter(featureAdapter);
                 } catch (InterruptedException | ExecutionException ex) {
                     // must deal with exceptions thrown from the async identify operation
                     Log.e("fuuuuuuuuuu",ex.getMessage());

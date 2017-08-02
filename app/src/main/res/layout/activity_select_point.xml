@@ -23,7 +23,28 @@
     <GridView
         android:id="@+id/selectPGirdView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_below="@id/search_bar_layout"
         android:numColumns="2"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:background="@color/lightblue"/>
+    <ListView
+        android:id="@+id/list_location3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/lightgray"/>
+    <TextView
+        android:id="@+id/tv_clean3"
+        android:text="清空历史记录"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="80dp"
+        android:textAppearance="?android:textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

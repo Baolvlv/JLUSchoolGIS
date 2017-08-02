@@ -1,8 +1,11 @@
 package pers.bwx.sample.jluschoolgis;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
@@ -53,6 +56,13 @@ public class Route extends AppCompatActivity {
     //声明sharedPreference的editor
     SharedPreferences.Editor shpreEditor;
 
+    //搜索历史数据库
+    HistoryDB hdb;
+    //可写入与可读取数据库
+    SQLiteDatabase hdbWrite;
+    SQLiteDatabase hdbRead;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,11 +86,20 @@ public class Route extends AppCompatActivity {
         pointLv = (ListView) findViewById(R.id.lv_setPoint);
 
 
+        //设置起终点文本
         setPointText();
-        //设置起终点文本框
         initPointLv();
 
+        //初始化数据库
+        initDataBase();
+
+        //将起终点存入数据库
+        writeToDataBase();
+
         pointLv.setOnItemClickListener(new MyPointItemClickListerner());
+
+
+
 
 
 
@@ -94,8 +113,9 @@ public class Route extends AppCompatActivity {
     }
 
 
-
-    //设置起终点文本
+    /***
+     * 设置起终点文本
+     */
     public void setPointText(){
         Intent setIntent = getIntent();
 
@@ -117,6 +137,9 @@ public class Route extends AppCompatActivity {
     }
 
 
+    /***
+     * 填充起终点adapter
+     */
     public void initPointLv(){
         //起终点图片文字list
         ArrayList<HashMap<String,Object>> lstImageText = new ArrayList<>();
@@ -132,6 +155,49 @@ public class Route extends AppCompatActivity {
                 R.layout.point_item,new String[]{"pointImg","pointText"},
                 new int[]{R.id.pointImg,R.id.pointText});
         pointLv.setAdapter(pointAdapter);
+    }
+
+    /***
+     * 初始化数据库
+     */
+    public void initDataBase(){
+        hdb = new HistoryDB(getApplicationContext());
+        hdbRead = hdb.getReadableDatabase();
+        hdbWrite = hdb.getWritableDatabase();
+    }
+
+    /***
+     * 检查是否存在数据
+     * 有时返回true,没有时返回false
+     * @param tempName
+     * @return
+     */
+
+    private boolean hasData(String tempName) {
+            Cursor cursor = hdbRead.query("record", null,
+                    "location" + "=?", new String[]{tempName},
+                    null, null, null);
+            return cursor.moveToNext();
+
+
+        //判断是否有下一个
+
+    }
+
+    //写入数据库
+    public void writeToDataBase(){
+        ContentValues cv = new ContentValues();
+        if(!hasData(pointText[0]) && !(pointText[0].equals("我的位置"))){
+            cv.put("location",pointText[0]);
+            hdbWrite.insert("record",null,cv);
+        }
+        if (!hasData(pointText[1]) && !(pointText[1].equals("输入终点"))){
+            cv.put("location",pointText[1]);
+            hdbWrite.insert("record",null,cv);
+        }
+
+        hdbWrite.close();
+
     }
 
 
@@ -197,7 +263,9 @@ public class Route extends AppCompatActivity {
     }
 
 
-    //选择起点和终点时跳转
+    /***
+     * 选择起点与终点时跳转
+     */
     class MyPointItemClickListerner implements AdapterView.OnItemClickListener{
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

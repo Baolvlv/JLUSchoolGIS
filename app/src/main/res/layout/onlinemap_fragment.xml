@@ -18,8 +18,10 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:headerLayout="@layout/nav_header_online"
-        app:menu="@menu/online_function_menu"/>
-        android:fitsSystemWindows="true"/>
+        app:menu="@menu/online_function_menu">
+    </android.support.design.widget.NavigationView>
+
+        <!--android:fitsSystemWindows="true"/-->
 
 
 </android.support.v4.widget.DrawerLayout>

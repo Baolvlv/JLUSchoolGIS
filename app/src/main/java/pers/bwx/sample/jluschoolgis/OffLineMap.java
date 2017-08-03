@@ -1,7 +1,6 @@
 package pers.bwx.sample.jluschoolgis;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
@@ -12,7 +11,6 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -24,11 +22,9 @@ import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.Toast;
 
 import com.esri.arcgisruntime.concurrent.ListenableFuture;
 import com.esri.arcgisruntime.data.Feature;
-import com.esri.arcgisruntime.layers.FeatureLayer;
 import com.esri.arcgisruntime.loadable.LoadStatus;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
 import com.esri.arcgisruntime.mapping.GeoElement;
@@ -39,13 +35,8 @@ import com.esri.arcgisruntime.mapping.view.MapView;
 import com.esri.arcgisruntime.mapping.view.SketchCreationMode;
 import com.esri.arcgisruntime.mapping.view.SketchEditor;
 import com.esri.arcgisruntime.mapping.view.SketchStyle;
-import com.esri.arcgisruntime.portal.PortalItem;
-import com.esri.arcgisruntime.tasks.networkanalysis.RouteParameters;
-import com.esri.arcgisruntime.tasks.networkanalysis.RouteResult;
-import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +46,7 @@ import java.util.concurrent.ExecutionException;
  * Created by bwx on 2017/7/5.
  */
 
-public class OffLineMap extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, AdapterView.OnItemSelectedListener,AdapterView.OnItemClickListener {
+public class OffLineMap extends Fragment implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener{
 
     private MapView offMapView;
     private ArcGISMap mArcGISMap;
@@ -78,7 +69,8 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     SlidingUpPanelLayout supLayout;
 
 
-    String mmpkPath = Environment.getExternalStorageDirectory()+"/ArcGIS/shuchu.mmpk";
+
+
     private MobileMapPackage mobileMapPackage;
 
     //草图编辑器
@@ -113,10 +105,10 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
         //初始化GridView
         initGridView();
         //加载地图
-        loadMap();
+        loadMap(MapPath.chaoyangPath);
 
-
-
+        //初始化草图样式与草图编辑器
+        initSketch();
 
         return offView;
 
@@ -136,9 +128,11 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     }
 
 
-
-
-    //离线地图功能
+    /***
+     * 离线地图功能
+     * @param item
+     * @return
+     */
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
@@ -187,65 +181,9 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
     public void onDrawerStateChanged(int newState) {}
 
 
-
-
-    //选择不同校区时加载地图
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if(parent == schoolGv1){
-            switch (position){
-                case R.drawable.zhongxin:
-                    break;
-                case R.drawable.chaoyang:
-                    break;
-                case R.drawable.xinmin:
-                    break;
-            }
-        }else if(parent == schoolGv2){
-                switch (position){
-                    case R.drawable.nanling:
-                        break;
-                    case R.drawable.nanhu:
-                        break;
-                    case R.drawable.heping:
-                        break;
-                }
-            }
-        }
-
-
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {}
-
-
-    //点击不同校区时，加载图片
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        switch (schoolimage1[position]){
-            case R.drawable.zhongxin:
-                break;
-            case R.drawable.chaoyang:
-
-                mobileMapPackage.addDoneLoadingListener(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(mobileMapPackage.getLoadStatus() == LoadStatus.LOADED){
-                            mArcGISMap = mobileMapPackage.getMaps().get(0);
-                            offMapView.setMap(mArcGISMap);
-                        }
-                    }
-                });
-                mobileMapPackage.loadAsync();
-                break;
-            case R.drawable.xinmin:
-                break;
-        }
-    }
-
-
-
+    /***
+     * 识别点击屏幕监听者
+     */
     private class IdentifyFeatureLayerTouchListener extends DefaultMapViewOnTouchListener {
         Point point = new Point();
 
@@ -322,9 +260,9 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                 new int[]{R.id.itemImage,R.id.itemText} );
 
         schoolGv1.setAdapter(saSchool1);
-        schoolGv1.setOnItemSelectedListener(this);
         schoolGv2.setAdapter(saSchool2);
-        schoolGv2.setOnItemSelectedListener(this);
+        schoolGv1.setOnItemClickListener(new SchoolSelectListener1());
+        schoolGv2.setOnItemClickListener(new SchoolSelectListener2());
     }
 
     /***
@@ -342,20 +280,15 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
      * 加载地图
      */
 
-    public void loadMap(){
+    public void loadMap(String mapPath){
         try{
-            mobileMapPackage = new MobileMapPackage(mmpkPath);
+            mobileMapPackage = new MobileMapPackage(mapPath);
             mobileMapPackage.addDoneLoadingListener(new Runnable() {
                 @Override
                 public void run() {
                     if (mobileMapPackage.getLoadStatus() == LoadStatus.LOADED) {
                         mArcGISMap = mobileMapPackage.getMaps().get(0);
                         offMapView.setMap(mArcGISMap);
-                        //初始化草图样式与草图编辑器
-                        mainSketchEditor = new SketchEditor();
-                        mainSketchStyle = new SketchStyle();
-                        mainSketchEditor.setSketchStyle(mainSketchStyle);
-                        offMapView.setSketchEditor(mainSketchEditor);
                     }
                 }
             });
@@ -416,6 +349,61 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
         });
 
     }
+
+    /***
+     * 初始化草图样式与草图编辑器
+     */
+
+    public void initSketch(){
+        //初始化草图样式与草图编辑器
+        mainSketchEditor = new SketchEditor();
+        mainSketchStyle = new SketchStyle();
+        mainSketchEditor.setSketchStyle(mainSketchStyle);
+        offMapView.setSketchEditor(mainSketchEditor);
+    }
+
+    /***
+     * 选择校区监听类
+     */
+
+    class SchoolSelectListener1 implements AdapterView.OnItemClickListener{
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            switch (schoolimage1[position]){
+                case R.drawable.zhongxin:
+                    loadMap(MapPath.zhongxinPath);
+                    break;
+                case R.drawable.chaoyang:
+                    loadMap(MapPath.chaoyangPath);
+                    break;
+                case R.drawable.xinmin:
+                    loadMap(MapPath.xinminPath);
+                    break;
+            }
+        }
+    }
+
+    class SchoolSelectListener2 implements AdapterView.OnItemClickListener{
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            switch (schoolimage2[position]){
+                case R.drawable.nanling:
+                    loadMap(MapPath.nanlingPath);
+                    break;
+                case R.drawable.nanhu:
+                    loadMap(MapPath.nanhuPath);
+                    break;
+                case R.drawable.heping:
+                    loadMap(MapPath.xinminPath);
+                    break;
+            }
+        }
+    }
+
+
+
 
 
 

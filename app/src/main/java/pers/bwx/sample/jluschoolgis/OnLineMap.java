@@ -20,8 +20,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.CompoundButton;
 import android.widget.GridView;
+import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
+import android.widget.Switch;
 import android.widget.ZoomControls;
 
 import com.baidu.location.BDLocation;
@@ -84,6 +87,12 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     //选择地图类型格网
     private GridView mapTypeGV;
 
+    //交通图与热力图开关
+    Switch trafficSwitch;
+    Switch heatSwitch;
+    Switch panoramicSwitch;
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -143,6 +152,16 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         btnRoute = (FloatingActionButton) onView.findViewById(R.id.btnRoute);
         btnRoute.setOnClickListener(this);
+
+
+        //初始化交通图与热力图开关，设置监听器
+        trafficSwitch = (Switch) nvOnFunc.getHeaderView(0).findViewById(R.id.traffic_switch);
+        heatSwitch = (Switch) nvOnFunc.getHeaderView(0).findViewById(R.id.heat_switch);
+        panoramicSwitch= (Switch) nvOnFunc.getHeaderView(0).findViewById(R.id.panoramic_switch);
+        heatSwitch = (Switch) nvOnFunc.getHeaderView(0).findViewById(R.id.heat_switch);
+        SwitchChangeListener scl = new SwitchChangeListener();
+        trafficSwitch.setOnCheckedChangeListener(scl);
+        heatSwitch.setOnCheckedChangeListener(scl);
 
 
         //地图类型图片文字list
@@ -431,6 +450,33 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         public void onMapLoaded() {
             //缩放控件位置
             onMapView.setZoomControlsPosition(new Point(950,1200));
+        }
+    }
+
+    /***
+     * 开关转化监听器
+     */
+    class SwitchChangeListener implements CompoundButton.OnCheckedChangeListener{
+
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            int id = buttonView.getId();
+            switch (id){
+                case R.id.traffic_switch:
+                    if(isChecked){
+                        mBaiduMap.setTrafficEnabled(true);
+                    }else {
+                        mBaiduMap.setTrafficEnabled(false);
+                    }
+                    break;
+                case R.id.heat_switch:
+                    if(isChecked){
+                        mBaiduMap.setBaiduHeatMapEnabled(true);
+                    }else {
+                        mBaiduMap.setBaiduHeatMapEnabled(false);
+                    }
+                    break;
+            }
         }
     }
 

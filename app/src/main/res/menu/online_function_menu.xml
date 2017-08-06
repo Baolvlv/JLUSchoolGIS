@@ -2,24 +2,24 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/nvOnCompute"
+        android:id="@+id/nvOnMeasureDis"
         android:title="距离计算"
         android:icon="@mipmap/ic_distance_measure"/>
 
     <item
-        android:id="@+id/nvOnLoad"
+        android:id="@+id/nvOnMeasureArea"
         android:title="面积量测"
         android:icon="@mipmap/ic_area_measure"/>
     <item
-        android:id="@+id/nvOnLable"
+        android:id="@+id/nvOnSetLable"
         android:title="添加标注"
         android:icon="@mipmap/ic_label"/>
     <item
-        android:id="@+id/nvOnFood"
+        android:id="@+id/nvOnFindFood"
         android:title="周边美食"
         android:icon="@mipmap/ic_restaurant"/>
     <item
-        android:id="@+id/nvHotel"
+        android:id="@+id/nvFindHotel"
         android:title="周边旅店"
         android:icon="@mipmap/ic_hotel"/>
 

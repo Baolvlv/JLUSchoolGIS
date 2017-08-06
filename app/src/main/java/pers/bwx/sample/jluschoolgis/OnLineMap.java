@@ -23,6 +23,7 @@ import android.widget.CompoundButton;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -31,16 +32,34 @@ import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.CircleOptions;
+import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.Marker;
+import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.map.Stroke;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
+import com.baidu.mapapi.search.poi.PoiDetailResult;
+import com.baidu.mapapi.search.poi.PoiIndoorResult;
+import com.baidu.mapapi.search.poi.PoiNearbySearchOption;
+import com.baidu.mapapi.search.poi.PoiResult;
+import com.baidu.mapapi.search.poi.PoiSearch;
+import com.baidu.mapapi.search.poi.PoiSortType;
+import com.baidu.mapapi.utils.AreaUtil;
+import com.baidu.mapapi.utils.DistanceUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import static android.R.attr.radius;
 
 /**在线地图主fragment
  * 基于百度Android 地图 SDK v4.3.2
@@ -94,6 +113,24 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     Switch heatSwitch;
     Switch panoramicSwitch;
 
+    //用于测量的marker
+    Marker markerA;
+    Marker markerB;
+    //marker a,b的坐标
+    LatLng markerALL;
+    LatLng markerBLL;
+
+    //用于提示面积距离信息的泡泡
+    TextView popupText;
+
+    //POI检索实例
+    PoiSearch mPoiSearch;
+
+    //全景图标
+    Marker panMarker;
+   //全景图标经纬度
+    LatLng pLatLng;
+
 
 
     @Override
@@ -138,6 +175,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         mLocationClicent.stop();
         onMapView.onDestroy();
+        mPoiSearch.destroy();
     }
 
     @Override
@@ -235,10 +273,28 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         int id = item.getItemId();
         switch (id){
-            case R.id.nvOnCompute:
-
+            case R.id.nvOnMeasureDis:
+                //测量距离
+                mBaiduMap.clear();
+                cleanMarker();
+                initMeasureMarker();
+                mBaiduMap.setOnMarkerDragListener(new DMarkerDragListener());
                 break;
-            case R.id.nvOnLoad:
+            case R.id.nvOnMeasureArea:
+                //测量面积
+                mBaiduMap.clear();
+                cleanMarker();
+                initMeasureMarker();
+                mBaiduMap.setOnMarkerDragListener(new AMarkerDragListener());
+                break;
+            case R.id.nvOnFindFood:
+                mBaiduMap.clear();
+                cleanMarker();
+                searchRestaurant();
+                break;
+            case R.id.nvFindHotel:
+                mBaiduMap.clear();
+                searchHotel();
                 break;
         }
 
@@ -264,6 +320,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 .longitude(bdLocation.getLongitude()).build();
 
          ll = new LatLng(bdLocation.getLatitude(), bdLocation.getLongitude());
+        Log.e("fuuuuuuuul",ll.latitude+"    ,"+ll.longitude);
 
         // 设置定位数据
         mBaiduMap.setMyLocationData(locData);
@@ -367,6 +424,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         SwitchChangeListener scl = new SwitchChangeListener();
         trafficSwitch.setOnCheckedChangeListener(scl);
         heatSwitch.setOnCheckedChangeListener(scl);
+        panoramicSwitch.setOnCheckedChangeListener(scl);
 
     }
 
@@ -402,6 +460,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 //正常地图类型
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
                 mBaiduMap.setMyLocationEnabled(false);
+                cleanMarker();
 
                 //地图状态俯视角0
                 MapStatus twoDStatus = new MapStatus.Builder()
@@ -415,6 +474,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 break;
             case R.drawable.mapimage3d:
                 mBaiduMap.setMyLocationEnabled(false);
+                cleanMarker();
                 //地图状态俯视角30
                 MapStatus threeDStatus = new MapStatus.Builder()
                         .overlook(-30)
@@ -425,11 +485,54 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 mBaiduMap.setMapStatus(threeDStatusUpdate);
                 break;
             case R.drawable.mapweixing:
+                cleanMarker();
                 mBaiduMap.setMyLocationEnabled(false);
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
                 break;
         }
     }
+
+    /***
+     * 初始化用于测量的marker
+     * 清除marker
+     */
+
+    //初始化测量marker
+    public void initMeasureMarker(){
+        BitmapDescriptor bitmapA = BitmapDescriptorFactory
+                .fromResource(R.mipmap.ic_mark_a);
+        BitmapDescriptor bitmapB = BitmapDescriptorFactory
+                .fromResource(R.mipmap.ic_mark_b);
+
+        markerALL = new LatLng(ll.latitude+0.0005,ll.longitude+0.0005);
+        markerBLL = new LatLng(ll.latitude-0.0005,ll.longitude-0.0005);
+
+        OverlayOptions optionA = new MarkerOptions()
+                .position(markerALL)  //设置marker的位置
+                .icon(bitmapA)  //设置marker图标
+                .draggable(true);  //设置手势拖拽
+        OverlayOptions optionB = new MarkerOptions()
+                .position(markerBLL)  //设置marker的位置
+                .icon(bitmapB)  //设置marker图标
+                .draggable(true);  //设置手势拖拽
+
+        //将marker添加到地图上
+        markerA = (Marker) (mBaiduMap.addOverlay(optionA));
+        markerB = (Marker) (mBaiduMap.addOverlay(optionB));
+        initPopupText();
+    }
+
+    //清除marker
+    public void cleanMarker(){
+        if(markerA != null && markerB != null){
+            markerA.remove();
+            markerB.remove();
+        }
+
+        mBaiduMap.hideInfoWindow();
+
+    }
+
 
     /***
      * 地图加载完成时的回调类，用以设置缩放控件位置
@@ -452,6 +555,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             int id = buttonView.getId();
             switch (id){
+                //实施交通图
                 case R.id.traffic_switch:
                     if(isChecked){
                         mBaiduMap.setTrafficEnabled(true);
@@ -459,6 +563,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                         mBaiduMap.setTrafficEnabled(false);
                     }
                     break;
+                //城市热力图
                 case R.id.heat_switch:
                     if(isChecked){
                         mBaiduMap.setBaiduHeatMapEnabled(true);
@@ -466,9 +571,249 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                         mBaiduMap.setBaiduHeatMapEnabled(false);
                     }
                     break;
+                //城市全景图
+                case R.id.panoramic_switch:
+                    if(isChecked){
+                        setPanoramaMarker(ll);
+                        mBaiduMap.setOnMapStatusChangeListener(new PanoramaChangeListener());
+
+                    }else {
+                        mBaiduMap.clear();
+                        //解绑监听者
+                        mBaiduMap.setOnMapStatusChangeListener(null);
+                    }
+                    break;
             }
         }
     }
+
+
+    /***
+     * 测量距离的marker拖拽监听器
+     */
+    class DMarkerDragListener implements BaiduMap.OnMarkerDragListener{
+
+        @Override
+        public void onMarkerDrag(Marker marker) {
+
+        }
+
+        @Override
+        public void onMarkerDragEnd(Marker marker) {
+            if(marker.equals(markerA)){
+                markerALL = marker.getPosition();
+            }
+            if (marker.equals(markerB)){
+                markerBLL = marker.getPosition();
+            }
+
+            popupText.setText("A,B两点之间的距离为："
+                    +DistanceUtil.getDistance(markerALL,markerBLL)+"米");
+
+            mBaiduMap.showInfoWindow(new InfoWindow(popupText, ll, 0));
+        }
+
+        @Override
+        public void onMarkerDragStart(Marker marker) {
+
+        }
+    }
+
+    /***
+     * 测量面积的marker拖拽监听器
+     */
+    class AMarkerDragListener implements BaiduMap.OnMarkerDragListener{
+
+        @Override
+        public void onMarkerDrag(Marker marker) {
+
+        }
+
+        @Override
+        public void onMarkerDragEnd(Marker marker) {
+            if(marker.equals(markerA)){
+                markerALL = marker.getPosition();
+            }
+            if (marker.equals(markerB)){
+                markerBLL = marker.getPosition();
+            }
+
+            popupText.setText("以A,B两点为东北西南角的矩形的面积为："
+                    +AreaUtil.calculateArea(markerALL,markerBLL)+"平方米");
+
+            mBaiduMap.showInfoWindow(new InfoWindow(popupText, ll, 0));
+        }
+
+        @Override
+        public void onMarkerDragStart(Marker marker) {
+
+        }
+    }
+
+
+    /***
+     * poi检索监听者
+     */
+    class MyPoiSearchListener implements OnGetPoiSearchResultListener{
+
+
+        //获取poi检索结果
+        @Override
+        public void onGetPoiResult(PoiResult poiResult) {
+
+
+            if (poiResult.error == SearchResult.ERRORNO.NO_ERROR) {
+                mBaiduMap.clear();
+                PoiOverlay overlay = new PoiOverlay(mBaiduMap);
+                mBaiduMap.setOnMarkerClickListener(overlay);
+                overlay.setData(poiResult);
+                overlay.addToMap();
+                overlay.zoomToSpan();
+                showNearbyArea(ll, 200);
+                return;
+            }
+
+        }
+
+        @Override
+        public void onGetPoiDetailResult(PoiDetailResult poiDetailResult) {
+
+        }
+
+        @Override
+        public void onGetPoiIndoorResult(PoiIndoorResult poiIndoorResult) {
+
+        }
+    }
+
+    /***
+     * 检索美食方法
+     */
+    public void searchRestaurant(){
+        mPoiSearch = PoiSearch.newInstance();
+        mPoiSearch.setOnGetPoiSearchResultListener(new MyPoiSearchListener());
+        //采用周边搜索，设置周边搜索参数
+        PoiNearbySearchOption nearbySearchOption = new PoiNearbySearchOption()
+                .keyword("美食").sortType(PoiSortType.distance_from_near_to_far)
+                .location(ll).radius(200);
+        mPoiSearch.searchNearby(nearbySearchOption);
+
+    }
+
+    /***
+     * 检索美食方法
+     */
+
+    public void searchHotel(){
+        mPoiSearch = PoiSearch.newInstance();
+        mPoiSearch.setOnGetPoiSearchResultListener(new MyPoiSearchListener());
+        //采用周边搜索，设置周边搜索参数
+        PoiNearbySearchOption nearbySearchOption = new PoiNearbySearchOption()
+                .keyword("旅店").sortType(PoiSortType.distance_from_near_to_far)
+                .location(ll).radius(200);
+        mPoiSearch.searchNearby(nearbySearchOption);
+    }
+
+    /***
+     * 设置全景marker图标
+     */
+    public void setPanoramaMarker(LatLng latLng){
+        Log.e("fuuuuck",latLng.toString());
+        BitmapDescriptor pBitmap = BitmapDescriptorFactory
+                .fromResource(R.drawable.icon_geo);
+
+        //构建MarkerOption，用于在地图上添加Marker
+        OverlayOptions pOption = new MarkerOptions()
+                .position(latLng)
+                .icon(pBitmap);
+        //在地图上添加Marker，并显示
+        panMarker = (Marker) mBaiduMap.addOverlay(pOption);
+    }
+
+    /**
+     * 对周边检索的范围进行绘制
+     * @param center
+     * @param radius
+     */
+    public void showNearbyArea( LatLng center, int radius) {
+        BitmapDescriptor centerBitmap = BitmapDescriptorFactory
+                .fromResource(R.drawable.icon_geo);
+        MarkerOptions ooMarker = new MarkerOptions().position(center).icon(centerBitmap);
+        mBaiduMap.addOverlay(ooMarker);
+
+        OverlayOptions ooCircle = new CircleOptions().fillColor(0x00000000)
+                .center(center).stroke(new Stroke(10,0xff00ffff))
+                .radius(radius);
+        mBaiduMap.addOverlay(ooCircle);
+    }
+
+    /***
+     * 初始化popupText
+     */
+    public void initPopupText(){
+        popupText = new TextView(getContext());
+        popupText.setBackgroundResource(R.drawable.popup);
+        popupText.setTextColor(0xFF000000);
+    }
+
+
+
+    /***
+     * 地图状态改变监听类
+     * 用来移动全景marker,获得移动后的坐标
+     */
+    class PanoramaChangeListener implements BaiduMap.OnMapStatusChangeListener{
+
+        @Override
+        public void onMapStatusChangeStart(MapStatus mapStatus) {
+
+        }
+
+        @Override
+        public void onMapStatusChange(MapStatus mapStatus) {
+
+        }
+
+        @Override
+        public void onMapStatusChangeFinish(MapStatus mapStatus) {
+
+            panMarker.remove();
+            pLatLng = mapStatus.target;
+            setPanoramaMarker(pLatLng);
+
+            initPopupText();
+            popupText.setText("查看全景");
+            //第三个参数为偏移量，用以显示在marker上方
+            mBaiduMap.showInfoWindow(new InfoWindow(popupText, pLatLng, -50));
+            popupText.setOnClickListener(new ViewPanorama());
+
+        }
+    }
+
+    /***
+     * 查看全景监听器
+     */
+
+    class ViewPanorama implements View.OnClickListener{
+
+        @Override
+        public void onClick(View v) {
+            Intent toPanorama = new Intent(getContext(),PanoramaActivity.class);
+
+            toPanorama.putExtra("latitude",pLatLng.latitude);
+            toPanorama.putExtra("longitude",pLatLng.longitude);
+
+            startActivity(toPanorama);
+
+        }
+    }
+
+
+
+
+
+
+
 
 
     @Override

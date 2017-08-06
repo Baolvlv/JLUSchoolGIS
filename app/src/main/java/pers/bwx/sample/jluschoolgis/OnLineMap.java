@@ -2,6 +2,7 @@ package pers.bwx.sample.jluschoolgis;
 
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
@@ -14,12 +15,16 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
 import android.widget.Switch;
@@ -44,6 +49,7 @@ import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.map.Stroke;
+import com.baidu.mapapi.map.TextOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.core.SearchResult;
 import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
@@ -60,6 +66,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static android.R.attr.radius;
+import static android.R.id.edit;
+import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**在线地图主fragment
  * 基于百度Android 地图 SDK v4.3.2
@@ -128,8 +136,16 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
     //全景图标
     Marker panMarker;
-   //全景图标经纬度
+    //全景图标经纬度
     LatLng pLatLng;
+
+    //用于添加标注的泡泡
+    EditText popupEdit;
+    //标注泡泡的经纬度
+    LatLng peLatLng;
+    //用于标注的infowindow
+    InfoWindow labelWindow;
+
 
 
 
@@ -275,6 +291,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         switch (id){
             case R.id.nvOnMeasureDis:
                 //测量距离
+                mBaiduMap.setOnMapStatusChangeListener(null);
                 mBaiduMap.clear();
                 cleanMarker();
                 initMeasureMarker();
@@ -282,17 +299,30 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 break;
             case R.id.nvOnMeasureArea:
                 //测量面积
+                mBaiduMap.setOnMapStatusChangeListener(null);
                 mBaiduMap.clear();
                 cleanMarker();
                 initMeasureMarker();
                 mBaiduMap.setOnMarkerDragListener(new AMarkerDragListener());
                 break;
+            case R.id.nvOnSetLable:
+                //添加标注
+                mBaiduMap.setOnMapStatusChangeListener(null);
+                initPopupEdit();
+
+                mBaiduMap.showInfoWindow(new InfoWindow(popupEdit, ll, -50));
+                mBaiduMap.setOnMapStatusChangeListener(new PopupEditListener());
+                break;
             case R.id.nvOnFindFood:
+                //周边美食
+                mBaiduMap.setOnMapStatusChangeListener(null);
                 mBaiduMap.clear();
                 cleanMarker();
                 searchRestaurant();
                 break;
             case R.id.nvFindHotel:
+                //周边旅店
+                mBaiduMap.setOnMapStatusChangeListener(null);
                 mBaiduMap.clear();
                 searchHotel();
                 break;
@@ -458,6 +488,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         switch (mapTypeImage[position]){
             case R.drawable.mapimage2d:
                 //正常地图类型
+                mBaiduMap.setOnMapStatusChangeListener(null);
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
                 mBaiduMap.setMyLocationEnabled(false);
                 cleanMarker();
@@ -473,6 +504,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
                 break;
             case R.drawable.mapimage3d:
+                mBaiduMap.setOnMapStatusChangeListener(null);
                 mBaiduMap.setMyLocationEnabled(false);
                 cleanMarker();
                 //地图状态俯视角30
@@ -485,6 +517,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 mBaiduMap.setMapStatus(threeDStatusUpdate);
                 break;
             case R.drawable.mapweixing:
+                mBaiduMap.setOnMapStatusChangeListener(null);
                 cleanMarker();
                 mBaiduMap.setMyLocationEnabled(false);
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
@@ -557,6 +590,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
             switch (id){
                 //实施交通图
                 case R.id.traffic_switch:
+                    mBaiduMap.setOnMapStatusChangeListener(null);
                     if(isChecked){
                         mBaiduMap.setTrafficEnabled(true);
                     }else {
@@ -565,6 +599,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                     break;
                 //城市热力图
                 case R.id.heat_switch:
+                    mBaiduMap.setOnMapStatusChangeListener(null);
                     if(isChecked){
                         mBaiduMap.setBaiduHeatMapEnabled(true);
                     }else {
@@ -573,6 +608,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                     break;
                 //城市全景图
                 case R.id.panoramic_switch:
+                    mBaiduMap.setOnMapStatusChangeListener(null);
                     if(isChecked){
                         setPanoramaMarker(ll);
                         mBaiduMap.setOnMapStatusChangeListener(new PanoramaChangeListener());
@@ -701,7 +737,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     }
 
     /***
-     * 检索美食方法
+     * 检索旅店方法
      */
 
     public void searchHotel(){
@@ -756,6 +792,21 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
         popupText.setTextColor(0xFF000000);
     }
 
+    /***
+     * 初始化popupEdit
+     */
+
+    public void initPopupEdit(){
+        popupEdit = new EditText(getContext());
+        popupEdit.setBackgroundResource(R.drawable.popup);
+        popupEdit.setHintTextColor(0xff00ffff);
+        popupEdit.setHint("在此添加标注");
+        popupEdit.setSingleLine(true);
+        popupEdit.setImeOptions(EditorInfo.IME_ACTION_SEND);
+        popupEdit.setOnEditorActionListener(new PopEditOnKeyListener());
+    }
+
+
 
 
     /***
@@ -789,6 +840,80 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         }
     }
+
+    /***
+     * 地图状态改变监听类
+     * 用来改变popupEdit获得移动后的坐标
+     */
+    class PopupEditListener implements BaiduMap.OnMapStatusChangeListener{
+
+        @Override
+        public void onMapStatusChangeStart(MapStatus mapStatus) {
+
+        }
+
+        @Override
+        public void onMapStatusChange(MapStatus mapStatus) {
+
+        }
+
+        @Override
+        public void onMapStatusChangeFinish(MapStatus mapStatus) {
+
+            peLatLng = mapStatus.target;
+
+            initPopupEdit();
+
+            labelWindow = new InfoWindow(popupEdit, peLatLng, -50);
+
+
+            mBaiduMap.showInfoWindow(labelWindow);
+
+
+        }
+    }
+
+    /***
+     * 输入结束监听器
+     */
+
+    class PopEditOnKeyListener implements TextView.OnEditorActionListener{
+
+        @Override
+        public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+            if (actionId==EditorInfo.IME_ACTION_SEND
+                    ||(event!=null&&event.getKeyCode()== KeyEvent.KEYCODE_ENTER)){
+
+                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
+
+                mBaiduMap.hideInfoWindow();
+                addLabelOnMap(popupEdit.getText().toString());
+
+            }
+
+            return false;
+        }
+    }
+
+    /***
+     * 向地图上添加文字标注
+     */
+
+    public void addLabelOnMap(String text){
+
+        OverlayOptions labelOption = new TextOptions()
+                .bgColor(0xAAFFFF00)
+                .fontSize(60)
+                .fontColor(0xFFFF00FF)
+                .text(text)
+                .rotate(-30)
+                .position(peLatLng);
+
+        mBaiduMap.addOverlay(labelOption);
+
+    }
+
 
     /***
      * 查看全景监听器

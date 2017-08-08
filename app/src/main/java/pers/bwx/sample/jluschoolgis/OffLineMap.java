@@ -1,9 +1,9 @@
 package pers.bwx.sample.jluschoolgis;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -143,15 +143,15 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                 IdentifyFeatureLayerTouchListener ml =
                         new IdentifyFeatureLayerTouchListener(getContext(),offMapView);
                 offMapView.setOnTouchListener(ml);
-                Log.e("oooooooooooooooooooooo",ml.point.toString());
-
-
                 break;
             case R.id.nvOffSketchEditor:
                 //草图编辑功能：
                 mainSketchEditor.start(SketchCreationMode.POLYGON);
                 break;
-            case R.id.nvOffSave:
+            case R.id.nvOffIntroduction:
+                //校园简介
+                Intent toIntroduction = new Intent(getContext(),SchoolIntroduction.class);
+                startActivity(toIntroduction);
                 break;
         }
 
@@ -192,18 +192,15 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
             super(context, mapView);
 
         }
-
         // 点击屏幕
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
-            // get the screen point where user tapped
+           //点击屏幕获取屏幕点
             this.point = new Point((int) e.getX(), (int) e.getY());
-            Log.e("777777777777777",point.toString());
-            // ...
+            //调用识别方法
+            identify(point);
 
-            identufy(point);
-
-            //设置向上滑动属性表出现
+            //设置向上滑动属性表的出现
             supLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
             return true;
         }
@@ -304,33 +301,31 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
      * 查询所有的要素图层
      */
 
-    public void identufy(Point p){
+    public void identify(Point p){
 
-        // call identifyLayersAsync, passing in the screen point, tolerance, return types, and maximum results, but no layer
+        //使用identifyLayersAsync,识别全图层，传入参数为点击的屏幕点，容错像素，返回值，最大结果数
         final ListenableFuture<List<IdentifyLayerResult>> identifyFuture = offMapView.identifyLayersAsync(
                 p, 10, false, 25);
 
-        // add a listener to the future
+        //添加监听者，执行识别完成的操作
         identifyFuture.addDoneListener(new Runnable() {
             @Override
             public void run() {
                 try {
-                    // get the identify results from the future - returns when the operation is complete
+                    //获取识别结果
                     List<IdentifyLayerResult> identifyLayersResults = identifyFuture.get();
                     ArrayList<String> featureList = new ArrayList<>();
                     String tableName;
 
-                    // iterate all the layers in the identify result
+                    //迭代识别结果中的所有图层
                     for (IdentifyLayerResult identifyLayerResult : identifyLayersResults) {
 
-                        // iterate each result in each identified layer, and check for Feature results
+                        //迭代所有结果，并判断是否为控件要素
                         for (GeoElement identifiedElement : identifyLayerResult.getElements()) {
                             if (identifiedElement instanceof Feature) {
                                 Feature identifiedFeature = (Feature) identifiedElement;
 
-                                // Use feature as required, for example access attributes or geometry, select, build a table, etc...
-                                //processIdentifyFeatureResult(identifiedFeature, identifyLayerResult.getLayerContent());
-
+                                //获取属性表名称，并添加进要素列表中
                                 Log.e("result:",identifiedFeature.getFeatureTable().getTableName());
                                 tableName = identifiedFeature.getFeatureTable().getTableName();
 
@@ -342,7 +337,6 @@ public class OffLineMap extends Fragment implements View.OnClickListener, Naviga
                             R.layout.single_text_item,R.id.single_text,featureList);
                     featureListView.setAdapter(featureAdapter);
                 } catch (InterruptedException | ExecutionException ex) {
-                    // must deal with exceptions thrown from the async identify operation
                     Log.e("fuuuuuuuuuu",ex.getMessage());
                 }
             }

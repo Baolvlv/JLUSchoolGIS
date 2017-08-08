@@ -71,6 +71,34 @@ public class Route extends AppCompatActivity {
         SDKInitializer.initialize(getApplicationContext());
         setContentView(R.layout.activity_route);
 
+        //初始化界面
+        initUI();
+
+        //设置起终点文本
+        setPointText();
+        initPointLv();
+
+        //初始化数据库
+        initDataBase();
+
+        //将起终点存入数据库
+        writeToDataBase();
+
+    }
+
+
+    /***
+     * 返回键返回主Activity
+     */
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(getApplicationContext(),MainTabActivity.class));
+    }
+
+    /***
+     * 初始化界面
+     */
+    public void initUI(){
         pointImg = new int[]{R.mipmap.ic_st,R.mipmap.ic_en};
         pointText = new String[]{"我的位置","输入终点"};
 
@@ -84,32 +112,8 @@ public class Route extends AppCompatActivity {
         tabLayout.setupWithViewPager(mViewPager);
 
         pointLv = (ListView) findViewById(R.id.lv_setPoint);
-
-
-        //设置起终点文本
-        setPointText();
-        initPointLv();
-
-        //初始化数据库
-        initDataBase();
-
-        //将起终点存入数据库
-        writeToDataBase();
-
         pointLv.setOnItemClickListener(new MyPointItemClickListerner());
 
-
-
-
-
-
-    }
-
-
-    //返回上一个应用
-    @Override
-    public void onBackPressed() {
-        startActivity(new Intent(getApplicationContext(),MainTabActivity.class));
     }
 
 
@@ -178,13 +182,11 @@ public class Route extends AppCompatActivity {
                     "location" + "=?", new String[]{tempName},
                     null, null, null);
             return cursor.moveToNext();
-
-
-        //判断是否有下一个
-
     }
 
-    //写入数据库
+    /***
+     * 将起终点数据写入数据库
+     */
     public void writeToDataBase(){
         ContentValues cv = new ContentValues();
         if(!hasData(pointText[0]) && !(pointText[0].equals("我的位置"))){
@@ -201,13 +203,18 @@ public class Route extends AppCompatActivity {
     }
 
 
+    /***
+     * 界面选择adapter
+     * 不同出行方式界面
+     * 总数
+     * 标题
+     */
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
         }
-
         //选择不同的出行方式，返回不同的界面
         @Override
         public Fragment getItem(int position) {
@@ -246,7 +253,6 @@ public class Route extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
             return 2;
         }
 

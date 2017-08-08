@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -29,22 +30,10 @@ import com.baidu.mapapi.SDKInitializer;
 
 public class MainTabActivity extends AppCompatActivity {
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
+    //填充不同选择的adapter
     private SectionsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
+    //承载内容的viewPager
     private ViewPager mViewPager;
-
-
     //判断是否退出程序标志
     boolean isExit;
 
@@ -56,26 +45,16 @@ public class MainTabActivity extends AppCompatActivity {
         SDKInitializer.initialize(getApplicationContext());
         setContentView(R.layout.activity_main_tab);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        toolbar.setTitle("JLUGIS");
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(mViewPager);
-
+        initUI();
 
     }
 
 
-
+    /***
+     * 返回键功能：
+     * 关闭打开的抽屉
+     * 连续按两次退出程序
+     */
     @Override
     public void onBackPressed() {
         DrawerLayout offdrawer = (DrawerLayout) findViewById(R.id.dyOffFunc);
@@ -90,6 +69,7 @@ public class MainTabActivity extends AppCompatActivity {
             if (!isExit) {
                 isExit = true;
                 Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
+                //2秒中后将判断标志重新设置为false
                 mHandler.sendEmptyMessageDelayed(0, 2000);
             } else {
                 Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -102,7 +82,9 @@ public class MainTabActivity extends AppCompatActivity {
     }
 
 
-    //判断返回信息的handler
+    /***
+     * 重设判退出程序的判断标志
+     */
     Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -114,9 +96,11 @@ public class MainTabActivity extends AppCompatActivity {
     };
 
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
+    /***
+     * 切换界面的adapter类
+     * 根据选择返回离线与在线的fragment
+     * 界面总数
+     * 界面标题
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
@@ -138,7 +122,6 @@ public class MainTabActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
             return 2;
         }
 
@@ -152,5 +135,27 @@ public class MainTabActivity extends AppCompatActivity {
             }
             return null;
         }
+    }
+
+    /***
+     * 初始化界面
+     * 包括SectionPagerAdapter
+     * ViewPage
+     * Tablayout
+     */
+
+    private void initUI(){
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setTitle("JLUGIS");
+        //初始化
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(mViewPager);
     }
 }

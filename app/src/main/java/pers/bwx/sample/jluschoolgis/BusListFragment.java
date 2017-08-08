@@ -82,7 +82,6 @@ public class BusListFragment extends Fragment implements OnGetRoutePlanResultLis
         PlanNode enNode = PlanNode.withCityNameAndPlaceName("长春", endNodeStr);
 
         //发起公交检索
-        //mSearch.masstransitSearch(new MassTransitRoutePlanOption().from(stNode).to(enNode));
         mSearch.transitSearch((new TransitRoutePlanOption())
                 .from(stNode)
                 .city("长春")
@@ -117,7 +116,7 @@ public class BusListFragment extends Fragment implements OnGetRoutePlanResultLis
     //综合公交线路规划结果
     @Override
     public void onGetMassTransitRouteResult(MassTransitRouteResult massTransitRouteResult) {
-       //busList.setAdapter(getBusListAdapter(massTransitRouteResult));
+
 
     }
 

@@ -66,6 +66,34 @@ public class BusFragmnet extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         busView = inflater.inflate(R.layout.bus_fragment,container,false);
 
+        //初始化gridView
+        initBusGV(busView);
+        //初始化历史记录列表
+        initLocationList(busView);
+
+        return busView;
+    }
+
+
+    /***
+     * 刷新历史记录列表
+     */
+    public void refershListView(){
+        //更改adapter的Cursor更新列表
+        Cursor c = hdbRead.query("record",
+                new String[]{"_id as _id","location"}
+                ,null,null,null,null,null);
+        adapter.changeCursor(c);
+
+
+    }
+
+    /***
+     * 初始化gridView
+     * @param busView
+     */
+
+    public void initBusGV(View busView){
         busGV = (GridView) busView.findViewById(R.id.busGirdView);
 
         //地图类型图片文字list
@@ -83,7 +111,14 @@ public class BusFragmnet extends Fragment {
                 new int[]{R.id.itemIcon,R.id.itemText});
         //设置地图类型gridView的adapter
         busGV.setAdapter(busAdapter);
+    }
 
+    /***
+     * 初始化历史记录列表
+     * @param busView
+     */
+
+    public void initLocationList(View busView){
 
         //历史位置列表
         locationList = (ListView) busView.findViewById(R.id.list_location);
@@ -99,23 +134,9 @@ public class BusFragmnet extends Fragment {
         }
 
 
-         adapter = new SimpleCursorAdapter(getContext(),R.layout.single_text_item
+        adapter = new SimpleCursorAdapter(getContext(),R.layout.single_text_item
                 ,c,new String[]{"location"},new int[]{R.id.single_text});
         locationList.setAdapter(adapter);
-
-
-        return busView;
-    }
-
-
-    //刷新历史记录列表
-    public void refershListView(){
-        //更改adapter的Cursor更新列表
-        Cursor c = hdbRead.query("record",
-                new String[]{"_id as _id","location"}
-                ,null,null,null,null,null);
-        adapter.changeCursor(c);
-
 
     }
 

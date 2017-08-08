@@ -2,39 +2,38 @@
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    tools:context="pers.bwx.sample.jluschoolgis.MainTabActivity">
-
+    tools:context="pers.bwx.sample.jluschoolgis.SchoolIntroduction">
     <android.support.design.widget.AppBarLayout
-        android:id="@+id/appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="@dimen/appbar_padding_top"
         android:theme="@style/AppTheme.AppBarOverlay">
-
         <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
+            android:id="@+id/sIToolbar"
             android:layout_width="match_parent"
-            android:title="JLUGIS"
             android:layout_height="?attr/actionBarSize"
+            android:title="校园简介"
             android:background="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|enterAlways"
             app:popupTheme="@style/AppTheme.PopupOverlay">
+            <TextView
+                android:id="@+id/school_toolbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginLeft="85dp"
+                android:textStyle="bold"
+                android:text="校园简介"
+                android:textColor="@android:color/white"
+                android:textSize="20dp"/>
         </android.support.v7.widget.Toolbar>
-        <android.support.design.widget.TabLayout
-            android:id="@+id/tabs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:tabIndicatorColor="@android:color/holo_green_light"
-            app:tabSelectedTextColor="@android:color/holo_orange_light" />
     </android.support.design.widget.AppBarLayout>
-    <pers.bwx.sample.jluschoolgis.CustomViewPager
-        android:id="@+id/container"
+    <WebView
+        android:id="@+id/introduction_web"
+        android:layout_marginTop="15dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:layout_height="match_parent">
+    </WebView>
 
 </android.support.design.widget.CoordinatorLayout>
+

@@ -191,7 +191,10 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
 
         mLocationClicent.stop();
         onMapView.onDestroy();
-        mPoiSearch.destroy();
+        if(mPoiSearch != null){
+            mPoiSearch.destroy();
+        }
+
     }
 
     @Override
@@ -412,8 +415,8 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
      */
 
     public void initUI(View view){
-        onMapView = (MapView) view.findViewById(R.id.bmapView);
 
+        onMapView = (MapView) view.findViewById(R.id.bmapView);
 
         mBaiduMap = onMapView.getMap();
 
@@ -520,6 +523,7 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
                 mBaiduMap.setOnMapStatusChangeListener(null);
                 cleanMarker();
                 mBaiduMap.setMyLocationEnabled(false);
+
                 mBaiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
                 break;
         }
@@ -816,14 +820,10 @@ public class OnLineMap extends Fragment implements View.OnClickListener, Navigat
     class PanoramaChangeListener implements BaiduMap.OnMapStatusChangeListener{
 
         @Override
-        public void onMapStatusChangeStart(MapStatus mapStatus) {
-
-        }
+        public void onMapStatusChangeStart(MapStatus mapStatus) {}
 
         @Override
-        public void onMapStatusChange(MapStatus mapStatus) {
-
-        }
+        public void onMapStatusChange(MapStatus mapStatus) {}
 
         @Override
         public void onMapStatusChangeFinish(MapStatus mapStatus) {

@@ -73,7 +73,7 @@ public class PoiOverlay extends OverlayManager {
 
     /**
      * 获取该 PoiOverlay 的 poi数据
-     *
+     *弹出点击poi的名称
      * @return
      */
     public PoiResult getPoiResult() {
@@ -90,6 +90,11 @@ public class PoiOverlay extends OverlayManager {
         return false;
     }
 
+    /***
+     * 点击marker时调用点击poi的方法
+     * @param marker
+     * @return
+     */
     @Override
     public boolean onMarkerClick(Marker marker) {
         if (!mOverlayList.contains(marker)) {

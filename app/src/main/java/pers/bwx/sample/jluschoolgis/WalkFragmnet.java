@@ -49,6 +49,18 @@ public class WalkFragmnet extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         walkView  =inflater.inflate(R.layout.walk_fragmnet,container,false);
 
+        //初始化历史记录列表
+        initLocationList(walkView);
+
+        return walkView;
+    }
+
+    /***
+     * 初始化位置列表
+     * @param walkView
+     */
+
+    public void initLocationList(View walkView){
         //历史位置列表
         locationList = (ListView) walkView.findViewById(R.id.list_location2);
         tvClean = (TextView) walkView.findViewById(R.id.tv_clean2);
@@ -61,12 +73,12 @@ public class WalkFragmnet extends Fragment {
         adapter = new SimpleCursorAdapter(getContext(),R.layout.single_text_item
                 ,c,new String[]{"location"},new int[]{R.id.single_text});
         locationList.setAdapter(adapter);
-
-        return walkView;
     }
 
 
-    //刷新历史记录列表
+    /***
+     * 刷新历史记录列表
+     */
     public void refershListView(){
         //更改adapter的Cursor更新列表
         Cursor c = hdbRead.query("record",

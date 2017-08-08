@@ -64,11 +64,32 @@ public class SelectPoint extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_point);
 
-        myToolBar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolBar);
+        //初始化UI
+        initUI();
+
         //获取传递的intent
         pointIntent = getIntent();
         hintText = pointIntent.getStringExtra("point");
+
+        //初始化选点类型
+        initSelectPointType();
+
+        //初始化数据库
+        initDB();
+
+        //设置历史列表
+        setHistoryList();
+
+
+    }
+
+    /***
+     * 初始化界面
+     */
+
+    public void initUI(){
+        myToolBar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolBar);
 
         //设置向上一级actionbar
         ActionBar ab = getSupportActionBar();
@@ -77,14 +98,22 @@ public class SelectPoint extends AppCompatActivity {
         selectPTypeImg = new int[]{R.mipmap.ic_sp_map,R.mipmap.ic_collection};
         selectPTypeText = new String[]{"地图选点","收藏选点"};
         selectPGV = (GridView) findViewById(R.id.selectPGirdView);
+    }
 
-        initSelectPointType();
-
+    /***
+     * 初始化数据库
+     */
+    public void initDB(){
         //初始化数据库
         hdb = new HistoryDB(getApplicationContext());
         hdbRead = hdb.getReadableDatabase();
         hdbWrite = hdb.getWritableDatabase();
+    }
 
+    /***
+     * 设置历史列表
+     */
+    public void setHistoryList(){
         //历史位置列表
         locationList = (ListView) findViewById(R.id.list_location3);
         tvClean = (TextView) findViewById(R.id.tv_clean3);
@@ -97,9 +126,13 @@ public class SelectPoint extends AppCompatActivity {
         adapter = new SimpleCursorAdapter(getContext(),R.layout.single_text_item
                 ,c,new String[]{"location"},new int[]{R.id.single_text});
         locationList.setAdapter(adapter);
-
     }
 
+    /***
+     * 解析searchView
+     * @param menu
+     * @return
+     */
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -109,8 +142,10 @@ public class SelectPoint extends AppCompatActivity {
     }
 
 
-
-    //设置searchView
+    /***
+     * 设置searchView
+     * @param menu
+     */
     private void setSearchView(Menu menu) {
         MenuItem item = menu.getItem(0);
         pointSv = new SearchView(this);
@@ -123,7 +158,9 @@ public class SelectPoint extends AppCompatActivity {
     }
 
 
-    //初始化选点类型
+    /****
+     * 初始阿虎选点类型
+     */
     private void initSelectPointType(){
 
         ArrayList<HashMap<String,Object>> spImageText = new ArrayList<>();
@@ -197,7 +234,9 @@ public class SelectPoint extends AppCompatActivity {
     }
 
 
-    //刷新历史记录列表
+    /***
+     * 刷新历史列表
+     */
     public void refershListView(){
         //更改adapter的Cursor更新列表
         Cursor c = hdbRead.query("record",

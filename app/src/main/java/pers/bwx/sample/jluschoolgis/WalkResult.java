@@ -118,6 +118,11 @@ public class WalkResult extends Fragment implements OnGetRoutePlanResultListener
         }
 
     }
+
+    /***
+     * 定义当前步行路线覆盖
+     * 设置起点与终点marker图标
+     */
     private class MyWalkingRouteOverlay extends WalkingRouteOverlay {
 
         public MyWalkingRouteOverlay(BaiduMap baiduMap) {

@@ -66,35 +66,25 @@ public class SelectPInMap extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //初始化百度sdk
         SDKInitializer.initialize(getApplicationContext());
+
         setContentView(R.layout.activity_select_pin_map);
 
         //获取intent
         seIntent = getIntent();
 
-        myToolBar = (Toolbar) findViewById(R.id.spToolbar);
-        myToolBar.setTitle("");
-        setSupportActionBar(myToolBar);
+        //初始化界面
+        initUI();
 
-        //返回上级actionbar
-        ActionBar ab = getSupportActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
-
-        //地图定位
-        mLocClient = new LocationClient(getApplicationContext());
-        mapView = (MapView) findViewById(R.id.selectPMapView);
-        map = mapView.getMap();
-        MyLocListener mll = new MyLocListener();
-        mLocClient.registerLocationListener(mll);
-        initLocation();
-        mLocClient.start();
-
-        map.setOnMapStatusChangeListener(new MyMapStatusChageListerner());
-
+        //初始化地图
+        initMap();
 
 
 
     }
 
+    /***
+     * 生命周期相关的地图操作
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -115,7 +105,46 @@ public class SelectPInMap extends AppCompatActivity {
         mapView.onResume();
     }
 
-    //初始化定位参数
+    /***
+     * 初始化ui
+     * ToolBar
+     * 返回上级的actionBar
+     */
+    public void initUI(){
+
+        myToolBar = (Toolbar) findViewById(R.id.spToolbar);
+        myToolBar.setTitle("");
+        setSupportActionBar(myToolBar);
+
+        //返回上级actionbar
+        ActionBar ab = getSupportActionBar();
+        ab.setDisplayHomeAsUpEnabled(true);
+    }
+
+    /***
+     * 初始化地图
+     * 定位
+     * 状态改变监听器
+     */
+
+    public void initMap(){
+
+        //地图定位
+        mLocClient = new LocationClient(getApplicationContext());
+        mapView = (MapView) findViewById(R.id.selectPMapView);
+        map = mapView.getMap();
+        MyLocListener mll = new MyLocListener();
+        mLocClient.registerLocationListener(mll);
+        initLocation();
+        mLocClient.start();
+        map.setOnMapStatusChangeListener(new MyMapStatusChageListerner());
+
+
+    }
+
+    /***
+     * 初始化定位参数
+     */
     private void initLocation(){
         locOption = new LocationClientOption();
         locOption.setLocationMode(LocationClientOption.LocationMode.Battery_Saving);
@@ -146,8 +175,9 @@ public class SelectPInMap extends AppCompatActivity {
     }
 
 
-
-    //定位监听者类
+    /***
+     * 定位监听者
+     */
     class MyLocListener implements BDLocationListener{
         LatLng mLat;
 
@@ -171,26 +201,11 @@ public class SelectPInMap extends AppCompatActivity {
             //判断起点与终点，并设置marker图标
             if(seIntent.getStringExtra("s|e").equals("start")){
                 startOrEnd = "s";
-                BitmapDescriptor sBitmap = BitmapDescriptorFactory
-                        .fromResource(R.mipmap.ic_st);
-
-                //构建MarkerOption，用于在地图上添加Marker
-                OverlayOptions sOption = new MarkerOptions()
-                        .position(ll)
-                        .icon(sBitmap);
-                //在地图上添加Marker，并显示
-                marker = (Marker) map.addOverlay(sOption);
+                setMarker(R.mipmap.ic_st);
             }else if (seIntent.getStringExtra("s|e").equals("end")){
 
                 startOrEnd = "e";
-                BitmapDescriptor  eBitmap = BitmapDescriptorFactory
-                        .fromResource(R.mipmap.ic_en);
-                //构建MarkerOption，用于在地图上添加Marker
-                OverlayOptions eOption = new MarkerOptions()
-                        .position(ll)
-                        .icon(eBitmap);
-                //在地图上添加Marker，并显示
-                marker = (Marker) map.addOverlay(eOption);
+                setMarker(R.mipmap.ic_en);
             }
 
             Log.e("sp",bdLocation.getLocType()+"");
@@ -205,6 +220,11 @@ public class SelectPInMap extends AppCompatActivity {
     }
 
 
+    /***
+     * 地理编码监听器
+     * 收到反地理编码后
+     * 提示具体地址信息
+     */
 
     class MyGeoCoderListener implements OnGetGeoCoderResultListener {
 
@@ -257,7 +277,11 @@ public class SelectPInMap extends AppCompatActivity {
     }
 
 
-    //地图状态监听改变接口
+    /***
+     * 地图状态改变监听器
+     * 重设marker
+     * 请求地理反编码
+     */
    class MyMapStatusChageListerner implements BaiduMap.OnMapStatusChangeListener {
 
        @Override
@@ -279,15 +303,9 @@ public class SelectPInMap extends AppCompatActivity {
            ll = mapStatus.target;
           //重设marker
            if(startOrEnd.equals("s")){
-               BitmapDescriptor sBitmap = BitmapDescriptorFactory
-                       .fromResource(R.mipmap.ic_st);
-               OverlayOptions newOption = new MarkerOptions().position(ll).icon(sBitmap);
-               marker = (Marker) map.addOverlay(newOption);
+               setMarker(R.mipmap.ic_st);
            }else if(startOrEnd.equals("e")) {
-               BitmapDescriptor eBitmap = BitmapDescriptorFactory
-                       .fromResource(R.mipmap.ic_en);
-               OverlayOptions newOption = new MarkerOptions().position(ll).icon(eBitmap);
-               marker = (Marker) map.addOverlay(newOption);
+               setMarker(R.mipmap.ic_en);
            }
 
            //实例化地理编码对象
@@ -301,5 +319,16 @@ public class SelectPInMap extends AppCompatActivity {
            geoCoder.setOnGetGeoCodeResultListener(new MyGeoCoderListener());
        }
    }
+
+    /***
+     * 设置marker图标
+     */
+
+    public void setMarker(int resource){
+        BitmapDescriptor bitmap = BitmapDescriptorFactory
+                .fromResource(resource);
+        OverlayOptions options = new MarkerOptions().position(ll).icon(bitmap);
+        marker = (Marker) map.addOverlay(options);
+    }
 
 }

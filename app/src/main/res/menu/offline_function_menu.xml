@@ -16,11 +16,11 @@
         android:icon="@mipmap/ic_route_shortest"/>
     <item
         android:id="@+id/nvOffIntroduction"
-        android:title="校区简介"
+        android:title="校园简介"
         android:icon="@mipmap/ic_info"/>
     <item
         android:id="@+id/nvOffversion"
-        android:title="版本信息"
+        android:title="功能介绍"
         android:icon="@mipmap/ic_version"/>
     <item
         android:id="@+id/nvOffFeedBack"
